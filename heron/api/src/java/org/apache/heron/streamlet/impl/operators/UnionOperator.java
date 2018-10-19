@@ -51,7 +51,7 @@ public class UnionOperator<I> extends StreamletOperator {
   public void execute(Tuple tuple) {
     //LOG.info(">>>>\t UnionOperator::execute(" + tuple + ")");
     I obj = (I) tuple.getValue(0);
-    collector.emit(tuple, new Values(obj, tuple.getValue(1)));
+    collector.emit(tuple, new Values(obj));
     collector.ack(tuple);
   }
 }

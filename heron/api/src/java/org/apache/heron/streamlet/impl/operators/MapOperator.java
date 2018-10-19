@@ -57,7 +57,7 @@ public class MapOperator<R, T> extends StreamletOperator {
     //LOG.info(">>>>\t MapOperator::execute(" + tuple + ")");
     R obj = (R) tuple.getValue(0);
     T result = mapFn.apply(obj);
-    collector.emit(tuple, new Values(result, tuple.getValue(1)));
+    collector.emit(tuple, new Values(result));
     collector.ack(tuple);
   }
 }

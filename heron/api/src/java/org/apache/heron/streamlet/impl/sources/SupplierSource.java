@@ -78,7 +78,7 @@ public class SupplierSource<R> extends StreamletSource {
       cache.put(msgId, r);
       //LOG.info(">>>> [" + msgId + ", (" + r  + ")] added to cache (ss)");
     }
-    collector.emit(new Values(r, msgId), msgId);
+    collector.emit(new Values(r), msgId);
     LOG.info(">>>>\n>>>> SUPPLIERSOURCE::nextTuple -> EMIT..." + new Values(r, msgId));
     if (ackEnabled) {
       msgId = getId();
@@ -102,7 +102,7 @@ public class SupplierSource<R> extends StreamletSource {
   @Override
   public synchronized void fail(Object mid) {
     if (ackEnabled) {
-      Values values = new Values(cache.get(mid), mid);
+      Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
       LOG.info(">>>> SUPPLIERSOURCE::fail -> re-emit..." + values + " : " + mid);
     }

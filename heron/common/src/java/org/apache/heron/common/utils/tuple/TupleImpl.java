@@ -84,7 +84,7 @@ public class TupleImpl implements Tuple {
     StringBuilder tinfo = new StringBuilder();
     tinfo.append(" >>>> _TUPLE: [");
     tinfo.append(" (src: " + getSourceComponent() + "),");
-    tinfo.append(" (msgId: " + getStringByField("msgId") + "),");
+    //tinfo.append(" (msgId: " + getStringByField("msgId") + "),");
     //String output = getStringByField("output");
     String output = getIntegerByField("output").toString();
     tinfo.append(" (output: " + output + ")");

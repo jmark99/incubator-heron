@@ -49,7 +49,7 @@ public abstract class StreamletOperator extends BaseRichBolt {
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
     LOG.info(">>>> StreamletOperator:declareOutputFields");
-    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME, MSGID_FIELD_NAME));
+    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME /*, MSGID_FIELD_NAME*/));
   }
 
   // for test dev purposes. Remove before release

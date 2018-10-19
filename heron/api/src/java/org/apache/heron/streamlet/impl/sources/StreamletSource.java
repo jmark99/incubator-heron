@@ -54,7 +54,7 @@ public abstract class StreamletSource extends BaseRichSpout
    */
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    String[] schema = {OUTPUT_FIELD_NAME, MSGID_FIELD_NAME};
+    String[] schema = {OUTPUT_FIELD_NAME /*, MSGID_FIELD_NAME*/};
     outputFieldsDeclarer.declare(new Fields(schema));
   }
 }

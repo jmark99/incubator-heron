@@ -59,7 +59,7 @@ public class FilterOperator<R> extends StreamletOperator {
     //LOG.info(">>>>\t FilterOperator::execute(" + tuple + ")");
     R obj = (R) tuple.getValue(0);
     if (filterFn.test(obj)) {
-      collector.emit(tuple, new Values(obj, tuple.getValue(1)));
+      collector.emit(tuple, new Values(obj));
     }
     collector.ack(tuple);
   }
