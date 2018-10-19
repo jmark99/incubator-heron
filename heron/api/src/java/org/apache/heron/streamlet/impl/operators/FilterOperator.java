@@ -21,6 +21,7 @@
 package org.apache.heron.streamlet.impl.operators;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.OutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
@@ -35,6 +36,8 @@ import org.apache.heron.streamlet.SerializablePredicate;
  * and the tuple is re-emitted if the predicate evaluates to true
  */
 public class FilterOperator<R> extends StreamletOperator {
+  private static final Logger LOG = Logger.getLogger(FilterOperator.class.getName());
+
   private static final long serialVersionUID = -4748646871471052706L;
   private SerializablePredicate<? super R> filterFn;
 
@@ -53,9 +56,10 @@ public class FilterOperator<R> extends StreamletOperator {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    //LOG.info(">>>>\t FilterOperator::execute(" + tuple + ")");
     R obj = (R) tuple.getValue(0);
     if (filterFn.test(obj)) {
-      collector.emit(new Values(obj));
+      collector.emit(tuple, new Values(obj, tuple.getValue(1)));
     }
     collector.ack(tuple);
   }

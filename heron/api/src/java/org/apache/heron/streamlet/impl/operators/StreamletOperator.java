@@ -20,6 +20,9 @@
 
 package org.apache.heron.streamlet.impl.operators;
 
+import java.util.Random;
+import java.util.logging.Logger;
+
 import org.apache.heron.api.bolt.BaseRichBolt;
 import org.apache.heron.api.topology.OutputFieldsDeclarer;
 import org.apache.heron.api.tuple.Fields;
@@ -30,7 +33,12 @@ import org.apache.heron.api.tuple.Fields;
  */
 public abstract class StreamletOperator extends BaseRichBolt {
   private static final long serialVersionUID = 8524238140745238942L;
-  private static final String OUTPUT_FIELD_NAME = "output";
+  static final String OUTPUT_FIELD_NAME = "output";
+  static final String MSGID_FIELD_NAME = "msgId";
+
+  private static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
+
+  private Random rand = new Random(System.currentTimeMillis());
 
   /**
    * The operators implementing streamlet functionality have some properties.
@@ -40,6 +48,15 @@ public abstract class StreamletOperator extends BaseRichBolt {
    */
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME));
+    LOG.info(">>>> StreamletOperator:declareOutputFields");
+    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME, MSGID_FIELD_NAME));
+  }
+
+  // for test dev purposes. Remove before release
+  public boolean dropMessage(int rate) {
+    if (rand.nextInt(100) < rate) {
+      return true;
+    }
+    return false;
   }
 }

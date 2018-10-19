@@ -36,7 +36,9 @@ public abstract class StreamletSource extends BaseRichSpout
     implements IStatefulComponent<Serializable, Serializable> {
 
   private static final long serialVersionUID = 8583965332619565343L;
-  private static final String OUTPUT_FIELD_NAME = "output";
+
+  static final String OUTPUT_FIELD_NAME = "output";
+  static final String MSGID_FIELD_NAME = "msgId";
 
   @Override
   public void initState(State<Serializable, Serializable> state) { }
@@ -52,6 +54,7 @@ public abstract class StreamletSource extends BaseRichSpout
    */
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME));
+    String[] schema = {OUTPUT_FIELD_NAME, MSGID_FIELD_NAME};
+    outputFieldsDeclarer.declare(new Fields(schema));
   }
 }

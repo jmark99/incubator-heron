@@ -67,7 +67,7 @@ public class ComplexSource<R> extends StreamletSource {
     Collection<R> val = generator.get();
     if (val != null) {
       for (R tuple : val) {
-        collector.emit(new Values(tuple));
+        collector.emit(new Values(tuple, null), null);
       }
     }
   }

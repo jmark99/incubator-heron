@@ -21,6 +21,7 @@
 package org.apache.heron.streamlet.impl.operators;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.OutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
@@ -32,6 +33,7 @@ import org.apache.heron.api.tuple.Values;
  * Its a very simple bolt that re-emits every tuple that it sees.
  */
 public class UnionOperator<I> extends StreamletOperator {
+  private static final Logger LOG = Logger.getLogger(UnionOperator.class.getName());
   private static final long serialVersionUID = -7326832064961413315L;
   private OutputCollector collector;
 
@@ -47,8 +49,9 @@ public class UnionOperator<I> extends StreamletOperator {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    //LOG.info(">>>>\t UnionOperator::execute(" + tuple + ")");
     I obj = (I) tuple.getValue(0);
-    collector.emit(new Values(obj));
+    collector.emit(tuple, new Values(obj, tuple.getValue(1)));
     collector.ack(tuple);
   }
 }
