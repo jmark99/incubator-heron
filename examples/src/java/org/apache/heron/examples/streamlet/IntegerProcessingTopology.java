@@ -21,6 +21,7 @@
 package org.apache.heron.examples.streamlet;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Logger;
 
 import org.apache.heron.examples.streamlet.utils.StreamletUtils;
 import org.apache.heron.streamlet.Builder;
@@ -37,13 +38,16 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * streamlet. The final output of the processing graph is then logged.
  */
 public final class IntegerProcessingTopology {
+
+  private static final Logger LOG = Logger.getLogger(IntegerProcessingTopology.class.getName());
+
   private IntegerProcessingTopology() {
   }
 
   // Heron resources to be applied to the topology
-  private static final double CPU = 1.0;
+  private static final double CPU = 1.5;
   private static final int GIGABYTES_OF_RAM = 8;
-  private static final int NUM_CONTAINERS = 1;
+  private static final int NUM_CONTAINERS = 2;
 
   private static boolean useSimulator = true;
 
@@ -56,24 +60,30 @@ public final class IntegerProcessingTopology {
     if (args != null && args.length > 0) {
       useSimulator = false;
     }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
 
     Builder builder = Builder.newBuilder();
 
     Streamlet<Integer> zeroes = builder.newSource(() -> {
-      if (useSimulator)
-        StreamletUtils.sleep(10000);
+      //if (useSimulator)
+      //  StreamletUtils.sleep(5000);
+      //else
+        StreamletUtils.sleep(1000);
       return 0;});
 
+    //builder.newSource(() -> ThreadLocalRandom.current().nextInt(1, 11))
     builder.newSource(() -> {
-      if (useSimulator)
-        StreamletUtils.sleep(3000);
+      //if (useSimulator)
+      //  StreamletUtils.sleep(1000);
+      //else
+        StreamletUtils.sleep(50);
       return ThreadLocalRandom.current()
           .nextInt(1, 11); })
           .setName("random-ints")
           .map(i -> i * 10)
           .setName("multi-ten")
           .union(zeroes)
-          .setName("unify-streams0")
+          .setName("unify-streams")
           .filter(i -> i != 20)
           .setName("remove-twenties")
           .log();

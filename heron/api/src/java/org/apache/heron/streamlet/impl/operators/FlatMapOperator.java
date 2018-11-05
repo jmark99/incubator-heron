@@ -57,7 +57,7 @@ public class FlatMapOperator<R, T> extends StreamletOperator {
     R obj = (R) tuple.getValue(0);
     Iterable<? extends T> result = flatMapFn.apply(obj);
     for (T o : result) {
-      collector.emit(new Values(o, null));
+      collector.emit(tuple, new Values(o, null));
     }
     collector.ack(tuple);
   }

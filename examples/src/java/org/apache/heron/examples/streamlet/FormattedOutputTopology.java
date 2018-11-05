@@ -31,6 +31,7 @@ import org.apache.heron.examples.streamlet.utils.StreamletUtils;
 import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Runner;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates the use of consume operations in the Heron
@@ -42,6 +43,13 @@ import org.apache.heron.streamlet.Runner;
  * filter is also applied to this source streamlet prior to logging).
  */
 public final class FormattedOutputTopology {
+
+  private static boolean useSimulator = true;
+
+  private static final double CPU = 1.5;
+  private static final int GIGABYTES_OF_RAM = 8;
+  private static final int NUM_CONTAINERS = 2;
+
   private FormattedOutputTopology() {
   }
 
@@ -90,9 +98,14 @@ public final class FormattedOutputTopology {
   }
 
   public static void main(String[] args) throws Exception {
-    Builder processingGraphBuilder = Builder.newBuilder();
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
 
-    processingGraphBuilder
+    Builder builder = Builder.newBuilder();
+
+    builder
         // The source streamlet is an indefinite series of sensor readings
         // emitted every two seconds
         .newSource(SensorReading::new)
@@ -108,12 +121,29 @@ public final class FormattedOutputTopology {
         ));
 
     // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    //String topologyName = StreamletUtils.getTopologyName(args);
 
-    Config config = Config.defaultConfig();
+    //Config config = Config.defaultConfig();
+    Config config = Config.newBuilder()
+        .setNumContainers(NUM_CONTAINERS)
+        .setPerContainerRamInGigabytes(GIGABYTES_OF_RAM)
+        .setPerContainerCpu(CPU)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    //new Runner().run(topologyName, config, processingGraphBuilder);
+    // Finally, the processing graph and configuration are passed to the Runner, which converts
+    // the graph into a Heron topology that can be run in a Heron cluster.
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }

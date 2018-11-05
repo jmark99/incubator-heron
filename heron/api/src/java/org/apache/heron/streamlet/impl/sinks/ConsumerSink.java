@@ -21,6 +21,7 @@
 package org.apache.heron.streamlet.impl.sinks;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.OutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
@@ -33,11 +34,13 @@ import org.apache.heron.streamlet.impl.operators.StreamletOperator;
  * consume function for every tuple.
  */
 public class ConsumerSink<R> extends StreamletOperator {
+  private static final Logger LOG = Logger.getLogger(ConsumerSink.class.getName());
   private static final long serialVersionUID = 8716140142187667638L;
   private SerializableConsumer<R> consumer;
   private OutputCollector collector;
 
   public ConsumerSink(SerializableConsumer<R> consumer) {
+    LOG.info(">>>> Using ConsumerSink()");
     this.consumer = consumer;
   }
 
@@ -50,8 +53,12 @@ public class ConsumerSink<R> extends StreamletOperator {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    if (dropMessage(10)) {
+      return;
+    }
     R obj = (R) tuple.getValue(0);
     consumer.accept(obj);
     collector.ack(tuple);
+    LOG.info(">>>> ConsumerSink sent ack...for " + obj ); //for " + tuple.toString());
   }
 }

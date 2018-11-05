@@ -23,6 +23,7 @@ package org.apache.heron.streamlet.impl.sources;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
@@ -39,12 +40,15 @@ import org.apache.heron.streamlet.impl.ContextImpl;
  */
 public class ComplexSource<R> extends StreamletSource {
   private static final long serialVersionUID = -5086763670301450007L;
+  private static final Logger LOG = Logger.getLogger(ComplexSource.class.getName());
   private Source<R> generator;
 
   private SpoutOutputCollector collector;
   private State<Serializable, Serializable> state;
 
   public ComplexSource(Source<R> generator) {
+
+    LOG.info(">>>> Using ComplexSource...");
     this.generator = generator;
   }
 

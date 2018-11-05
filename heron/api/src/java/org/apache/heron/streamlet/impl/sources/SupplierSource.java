@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 
 package org.apache.heron.streamlet.impl.sources;
 
@@ -47,19 +46,17 @@ public class SupplierSource<R> extends StreamletSource {
   private SpoutOutputCollector collector;
 
   private static final Logger LOG = Logger.getLogger(SupplierSource.class.getName());
-  private String msgId;
-  private Map<String, R> cache = new HashMap<>();
+  private Map<String,R> cache = new HashMap<>();
   private boolean ackEnabled = false;
+  private String msgId = null;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
     LOG.info(">>>> Using SupplierSource...");
     this.supplier = supplier;
     msgId = getId();
-    LOG.info(">>>> INITIAL MSGID: " + msgId);
   }
 
-  @SuppressWarnings("rawtypes")
-  @Override
+  @SuppressWarnings("rawtypes") @Override
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
     ackEnabled = isAckingEnabled(map, topologyContext);
@@ -70,57 +67,39 @@ public class SupplierSource<R> extends StreamletSource {
     return context.getConfig().get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
   }
 
-  @Override public synchronized void nextTuple() {
+  @Override public void nextTuple() {
     R r = supplier.get();
     if (!ackEnabled) {
       msgId = null;
     } else {
+      msgId = getId();
       cache.put(msgId, r);
-      //LOG.info(">>>> [" + msgId + ", (" + r  + ")] added to cache (ss)");
     }
     collector.emit(new Values(r), msgId);
-    LOG.info(">>>>\n>>>> SUPPLIERSOURCE::nextTuple -> EMIT..." + new Values(r, msgId));
-    if (ackEnabled) {
-      msgId = getId();
-    }
+    LOG.info(">>>> SUPPLIERSOURCE::nextTuple -> EMIT " + new Values(r, msgId));
   }
 
-  @Override
-  public synchronized void ack(Object mid) {
+  @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
-      //LOG.info(">>>> [" + mid + "], (" + data + ") removed from cache");
-      LOG.info(">>>> SupplierSource - SUCCESSFUL ACK ["  + mid + "] : (" + data + ")");
-//      if (cache.size() > 0) {
-//        LOG.info(">>>> CACHE:" );
-//        cache.forEach((k, v) -> LOG.info(">>>>\tcache[" + k + ", " + String.valueOf(v.toString()) + "]"));
-//        LOG.info(">>>> END CACHE:");
-//      }
+      LOG.info(">>>> SUPPLIERSOURCE::ack ------> ACKED [" + data + ", " + mid + "]");
     }
   }
 
-  @Override
-  public synchronized void fail(Object mid) {
+  @Override public void fail(Object mid) {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> SUPPLIERSOURCE::fail -> re-emit..." + values + " : " + mid);
     }
   }
 
   private static AtomicLong idCounter = new AtomicLong();
 
-  private synchronized String getId() {
+  private String getId() {
     return getUUID();
-    //return createID();
   }
 
   private String getUUID() {
     return UUID.randomUUID().toString();
   }
-
-  public static synchronized String createID() {
-    return "id-" + String.valueOf(idCounter.getAndIncrement());
-  }
-
 }

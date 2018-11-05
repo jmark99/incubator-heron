@@ -38,6 +38,7 @@ public class LogSink<R> extends StreamletOperator {
   private OutputCollector collector;
 
   public LogSink() {
+    LOG.info(">>>> Using LogSink()");
   }
 
   @SuppressWarnings("rawtypes")
@@ -49,14 +50,12 @@ public class LogSink<R> extends StreamletOperator {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    //LOG.info(">>>>\t LogSink::execute(" + tuple + ")");
-    if (dropMessage(20)) {
-      LOG.info(">>>> LogSink dropped message [(" + tuple + ")]");
+    if (dropMessage(10)) {
       return;
     }
     R obj = (R) tuple.getValue(0);
     LOG.info(">>>> " + String.valueOf(obj));
     collector.ack(tuple);
-    LOG.info(">>>> LogSink::execute.ack(" + tuple.toString() + ") sent");
+    LOG.info(">>>> LogSink sent ack for " + tuple);
   }
 }

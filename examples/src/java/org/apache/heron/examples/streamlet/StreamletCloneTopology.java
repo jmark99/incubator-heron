@@ -67,6 +67,7 @@ public final class StreamletCloneTopology {
     private int score;
 
     GameScore() {
+      StreamletUtils.sleep(1000);
       this.playerId = StreamletUtils.randomFromList(PLAYERS);
       this.score = ThreadLocalRandom.current().nextInt(1000);
     }
@@ -88,14 +89,14 @@ public final class StreamletCloneTopology {
     private static final long serialVersionUID = 5544736723673011054L;
 
     private void saveToDatabase(GameScore score) {
-      // This is a dummy operation, so no database logic will be implemented here
+      LOG.info(">>>> saved to database: " + score.score);
     }
 
     public void setup(Context context) {
     }
 
     public void put(GameScore score) {
-      String logMessage = String.format("Saving a score of %d for player %s to the database",
+      String logMessage = String.format(">>>> Saving a score of %d for player %s to the database",
           score.getScore(),
           score.getPlayerId());
       LOG.info(logMessage);
@@ -115,7 +116,7 @@ public final class StreamletCloneTopology {
     }
 
     public void put(GameScore score) {
-      String logMessage = String.format("The current score for player %s is %d",
+      String logMessage = String.format(">>>> The current score for player %s is %d",
           score.getPlayerId(),
           score.getScore());
       LOG.info(logMessage);
@@ -152,7 +153,10 @@ public final class StreamletCloneTopology {
     splitGameScoreStreamlet.get(1)
         .toSink(new FormattedLogSink());
 
-    Config config = Config.defaultConfig();
+
+    Config config = Config.newBuilder()
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Fetches the topology name from the first command-line argument
     String topologyName = StreamletUtils.getTopologyName(args);

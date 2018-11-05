@@ -35,14 +35,18 @@ import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Sink;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates how sinks work in the Heron Streamlet API for Java.
  * In this case, the sink is a temporary file. Each value that enters the graph
  * from the source streamlet (an indefinite series of randomly generated
- * integers) is written to that temporary file.
+ * integers) is written to that temporary file.q
  */
 public final class FilesystemSinkTopology {
+
+  private static boolean useSimulator = true;
+
   private FilesystemSinkTopology() {
   }
 
@@ -59,6 +63,7 @@ public final class FilesystemSinkTopology {
     private File tempFile;
 
     FilesystemSink(File f) {
+      LOG.info(">>>> Using FilesystemSink(" + f.getAbsolutePath() + ")");
       this.tempFile = f;
     }
 
@@ -83,7 +88,7 @@ public final class FilesystemSinkTopology {
       try {
         Files.write(tempFilePath, bytes, StandardOpenOption.APPEND);
         LOG.info(
-            String.format("Wrote %s to %s",
+            String.format(">>>> Wrote %s to %s",
                 new String(bytes),
                 tempFilePath.toAbsolutePath()
             )
@@ -105,7 +110,13 @@ public final class FilesystemSinkTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
-    Builder processingGraphBuilder = Builder.newBuilder();
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
+    Builder builder = Builder.newBuilder();
 
     // Creates a temporary file to write output into.
     File file = File.createTempFile("filesystem-sink-example", ".tmp");
@@ -116,7 +127,7 @@ public final class FilesystemSinkTopology {
         )
     );
 
-    processingGraphBuilder
+    builder
         .newSource(() -> {
           // This applies a "brake" that makes the processing graph write
           // to the temporary file at a reasonable, readable pace.
@@ -135,13 +146,20 @@ public final class FilesystemSinkTopology {
 
     Config config = Config.newBuilder()
         .setNumContainers(topologyParallelism)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .build();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    //new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }
