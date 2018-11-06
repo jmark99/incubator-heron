@@ -30,13 +30,20 @@ import org.junit.Test;
 
 import org.apache.heron.api.topology.TopologyBuilder;
 import org.apache.heron.common.basics.ByteAmount;
+import org.apache.heron.resource.TestBasicBolt;
+import org.apache.heron.resource.TestBolt;
+import org.apache.heron.resource.TestWindowBolt;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
+import org.apache.heron.streamlet.IStreamletBasicOperator;
+import org.apache.heron.streamlet.IStreamletRichOperator;
+import org.apache.heron.streamlet.IStreamletWindowOperator;
 import org.apache.heron.streamlet.SerializableConsumer;
 import org.apache.heron.streamlet.SerializableTransformer;
 import org.apache.heron.streamlet.Streamlet;
 import org.apache.heron.streamlet.WindowConfig;
 import org.apache.heron.streamlet.impl.streamlets.ConsumerStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.CustomStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FilterStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FlatMapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.JoinStreamlet;
@@ -134,7 +141,7 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testCloneStreamlet() throws Exception {
+  public void testCloneStreamlet() {
     Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
     List<Streamlet<Double>> streamlets = baseStreamlet.setNumPartitions(20).clone(2);
     assertEquals(streamlets.size(), 2);
@@ -183,6 +190,61 @@ public class StreamletImplTest {
           }
         });
     assertTrue(streamlet instanceof TransformStreamlet);
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
+  }
+
+  private class MyBoltOperator extends TestBolt implements IStreamletRichOperator<Double, Double> {
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCustomStreamletFromBolt() throws Exception {
+    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
+                                               .applyOperator(new MyBoltOperator());
+    assertTrue(streamlet instanceof CustomStreamlet);
+    CustomStreamlet<Double, Double> mStreamlet = (CustomStreamlet<Double, Double>) streamlet;
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
+  }
+
+  private class MyBasicBoltOperator extends TestBasicBolt
+      implements IStreamletBasicOperator<Double, Double> {
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCustomStreamletFromBasicBolt() throws Exception {
+    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
+                                               .applyOperator(new MyBasicBoltOperator());
+    assertTrue(streamlet instanceof CustomStreamlet);
+    CustomStreamlet<Double, Double> mStreamlet =
+        (CustomStreamlet<Double, Double>) streamlet;
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
+  }
+
+  private class MyWindowBoltOperator extends TestWindowBolt
+      implements IStreamletWindowOperator<Double, Double> {
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCustomStreamletFromWindowBolt() throws Exception {
+    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
+                                               .applyOperator(new MyWindowBoltOperator());
+    assertTrue(streamlet instanceof CustomStreamlet);
+    CustomStreamlet<Double, Double> mStreamlet =
+        (CustomStreamlet<Double, Double>) streamlet;
+    assertEquals(20, mStreamlet.getNumPartitions());
     SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
     assertEquals(supplierStreamlet.getChildren().size(), 1);
     assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
@@ -391,6 +453,13 @@ public class StreamletImplTest {
   public void testSetNumPartitionsWithInvalidValue() {
     Streamlet<Double> streamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
     streamlet.setNumPartitions(0);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  @SuppressWarnings("unchecked")
+  public void testCloneStreamletWithInvalidNumberOfClone() {
+    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    baseStreamlet.setNumPartitions(20).clone(0);
   }
 
   private void testByFunction(Function<String, Streamlet<Double>> function, String sName) {

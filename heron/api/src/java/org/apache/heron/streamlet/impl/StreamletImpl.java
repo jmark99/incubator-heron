@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.heron.api.topology.TopologyBuilder;
+import org.apache.heron.streamlet.IStreamletOperator;
 import org.apache.heron.streamlet.JoinType;
 import org.apache.heron.streamlet.KeyValue;
 import org.apache.heron.streamlet.KeyedWindow;
@@ -42,6 +43,7 @@ import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.Streamlet;
 import org.apache.heron.streamlet.WindowConfig;
 import org.apache.heron.streamlet.impl.streamlets.ConsumerStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.CustomStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FilterStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FlatMapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.GeneralReduceByKeyAndWindowStreamlet;
@@ -55,6 +57,7 @@ import org.apache.heron.streamlet.impl.streamlets.SourceStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SupplierStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.TransformStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.UnionStreamlet;
+import org.apache.heron.streamlet.impl.utils.StreamletUtils;
 
 /**
  * A Streamlet is a (potentially unbounded) ordered collection of tuples.
@@ -100,6 +103,9 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
 
   protected enum StreamletNamePrefix {
     CONSUMER("consumer"),
+    CUSTOM("custom"),
+    CUSTOM_BASIC("customBasic"),
+    CUSTOM_WINDOW("customWindow"),
     FILTER("filter"),
     FLATMAP("flatmap"),
     REDUCE("reduceByKeyAndWindow"),
@@ -142,7 +148,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public Streamlet<R> setName(String sName) {
-    require(sName != null && !sName.trim().isEmpty(),
+    StreamletUtils.require(sName != null && !sName.trim().isEmpty(),
         "Streamlet name cannot be null/blank");
     this.name = sName;
     return this;
@@ -181,7 +187,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public Streamlet<R> setNumPartitions(int numPartitions) {
-    require(numPartitions > 0,
+    StreamletUtils.require(numPartitions > 0,
         "Streamlet's partitions number should be > 0");
     this.nPartitions = numPartitions;
     return this;
@@ -209,6 +215,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
     if (built) {
       throw new RuntimeException("Logic Error While building " + getName());
     }
+
     if (doBuild(bldr, stageNames)) {
       built = true;
       for (StreamletImpl<?> streamlet : children) {
@@ -320,7 +327,9 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public List<Streamlet<R>> clone(int numClones) {
-    List<Streamlet<R>> retval = new ArrayList<>();
+    StreamletUtils.require(numClones > 0,
+        "Streamlet's clone number should be > 0");
+    List<Streamlet<R>> retval = new ArrayList<>(numClones);
     for (int i = 0; i < numClones; ++i) {
       retval.add(repartition(getNumPartitions()));
     }
@@ -484,14 +493,16 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   }
 
   /**
-   * Verifies the requirement as the utility function.
-   * @param requirement The requirement to verify
-   * @param errorMessage The error message
-   * @throws IllegalArgumentException if the requirement fails
+   * Returns a new Streamlet by applying the operator on each element of this streamlet.
+   * @param operator The operator to be applied
+   * @param <T> The return type of the transform
+   * @return Streamlet containing the output of the operation
    */
-  private void require(Boolean requirement, String errorMessage) {
-    if (!requirement) {
-      throw new IllegalArgumentException(errorMessage);
-    }
+  @Override
+  public <T> Streamlet<T> applyOperator(IStreamletOperator<R, T> operator) {
+    StreamletImpl<T> customStreamlet = new CustomStreamlet<>(this, operator);
+    addChild(customStreamlet);
+    return customStreamlet;
   }
+
 }

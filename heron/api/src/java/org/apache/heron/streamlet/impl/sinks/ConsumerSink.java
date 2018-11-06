@@ -33,9 +33,9 @@ import org.apache.heron.streamlet.impl.operators.StreamletOperator;
  * ConsumerSink is a very simple Sink that basically invokes a user supplied
  * consume function for every tuple.
  */
-public class ConsumerSink<R> extends StreamletOperator {
-  private static final Logger LOG = Logger.getLogger(ConsumerSink.class.getName());
+public class ConsumerSink<R> extends StreamletOperator<R, R> {
   private static final long serialVersionUID = 8716140142187667638L;
+  private static final Logger LOG = Logger.getLogger(ConsumerSink.class.getName());
   private SerializableConsumer<R> consumer;
   private OutputCollector collector;
 
