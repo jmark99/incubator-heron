@@ -85,7 +85,8 @@ public class ReduceByKeyAndWindowOperator<K, V, R> extends StreamletWindowOperat
     for (K key : reduceMap.keySet()) {
       Window window = new Window(startWindow, endWindow, windowCountMap.get(key));
       KeyedWindow<K> keyedWindow = new KeyedWindow<>(key, window);
-      collector.emit(new Values(new KeyValue<>(keyedWindow, reduceMap.get(key))));
+      collector.emit(inputWindow.get(), new Values(new KeyValue<>(keyedWindow,
+          reduceMap.get(key))));
     }
   }
 

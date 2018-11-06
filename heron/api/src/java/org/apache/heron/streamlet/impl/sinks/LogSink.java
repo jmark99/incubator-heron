@@ -56,6 +56,6 @@ public class LogSink<R> extends StreamletOperator<R, R> {
     R obj = (R) tuple.getValue(0);
     LOG.info(">>>> " + String.valueOf(obj));
     collector.ack(tuple);
-    LOG.info(">>>> LogSink sent ack for " + tuple);
+    LOG.info(">>>  LogSink sent ack for " + obj);
   }
 }

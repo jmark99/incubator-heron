@@ -181,7 +181,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
     for (V1 val1 : val.getFirst()) {
       for (V2 val2 : val.getSecond()) {
-        collector.emit(new Values(new KeyValue<>(keyedWindow,
+        collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
             joinFn.apply(val1, val2))));
       }
     }
@@ -190,7 +190,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   private void outerLeftJoinAndEmit(K key, TupleWindow tupleWindow, Pair<List<V1>, List<V2>> val) {
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
     for (V1 val1 : val.getFirst()) {
-      collector.emit(new Values(new KeyValue<>(keyedWindow,
+      collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
           joinFn.apply(val1, null))));
     }
   }
@@ -198,7 +198,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   private void outerRightJoinAndEmit(K key, TupleWindow tupleWindow, Pair<List<V1>, List<V2>> val) {
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
     for (V2 val2 : val.getSecond()) {
-      collector.emit(new Values(new KeyValue<>(keyedWindow,
+      collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
           joinFn.apply(null, val2))));
     }
   }
