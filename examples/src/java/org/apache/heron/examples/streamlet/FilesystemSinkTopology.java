@@ -41,7 +41,7 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * This topology demonstrates how sinks work in the Heron Streamlet API for Java.
  * In this case, the sink is a temporary file. Each value that enters the graph
  * from the source streamlet (an indefinite series of randomly generated
- * integers) is written to that temporary file.q
+ * integers) is written to that temporary file.
  */
 public final class FilesystemSinkTopology {
 
