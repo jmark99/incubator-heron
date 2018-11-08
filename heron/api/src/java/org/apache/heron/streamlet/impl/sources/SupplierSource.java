@@ -42,11 +42,11 @@ import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
  */
 public class SupplierSource<R> extends StreamletSource {
   private static final long serialVersionUID = 6476611751545430216L;
-  private SerializableSupplier<R> supplier;
+  private static final Logger LOG = Logger.getLogger(SupplierSource.class.getName());
 
+  private SerializableSupplier<R> supplier;
   private SpoutOutputCollector collector;
 
-  private static final Logger LOG = Logger.getLogger(SupplierSource.class.getName());
   private Map<String, R> cache = new HashMap<>();
   private boolean ackEnabled = false;
   private String msgId = null;
@@ -83,13 +83,14 @@ public class SupplierSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
-      LOG.info(">>>> SUPPLIERSOURCE::ack ------> ACKED [" + data + ", " + mid + "]");
+      LOG.info(">>>> SUPPLIERSOURCE::ack --------> ACKED [" + data + ", " + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
+      LOG.info(">>>> SUPPLIERSOURCE::fail -------> FAIL  [" + values + ", " + mid + "]");
       collector.emit(values, mid);
     }
   }

@@ -1,24 +1,12 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-
-
 package org.apache.heron.examples.streamlet;
+
+import org.apache.heron.examples.streamlet.utils.StreamletUtils;
+import org.apache.heron.streamlet.Builder;
+import org.apache.heron.streamlet.Config;
+import org.apache.heron.streamlet.KeyValue;
+import org.apache.heron.streamlet.Runner;
+import org.apache.heron.streamlet.WindowConfig;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -28,26 +16,15 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
-import org.apache.heron.examples.streamlet.utils.StreamletUtils;
-import org.apache.heron.streamlet.Builder;
-import org.apache.heron.streamlet.Config;
-import org.apache.heron.streamlet.KeyValue;
-import org.apache.heron.streamlet.Runner;
-import org.apache.heron.streamlet.WindowConfig;
+public class AckingSmartWatchTopology {
 
-/**
- * This topology shows an example usage of a reduce function. A source streamlet emits smart watch readings every 10
- * seconds from one of several joggers. Those readings provide  * The processing graph then converts those smart watch
- * readings to a KeyValue object, which is passed to a reduce function that calculates a per-jogger total number of feet
- * run in the last minute. The reduced value is then used to provide a per-runner average pace (feet per minute) and the
- * result is logged using a consume operation (which allows for a formatted log).
- */
-public final class SmartWatchTopology {
-  private SmartWatchTopology() {
+  private static boolean useSimulator = true;
+
+  private AckingSmartWatchTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(SmartWatchTopology.class.getName());
+      Logger.getLogger(AckingSmartWatchTopology.class.getName());
 
   private static final List<String> JOGGERS = Arrays.asList(
       "bill",
@@ -75,9 +52,15 @@ public final class SmartWatchTopology {
   }
 
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder processingGraphBuilder = Builder.newBuilder();
 
-    processingGraphBuilder.newSource(SmartWatchReading::new)
+    processingGraphBuilder.newSource(AckingSmartWatchTopology.SmartWatchReading::new)
         .setName("incoming-watch-readings")
         .reduceByKeyAndWindow(
             // Key extractor
@@ -117,13 +100,21 @@ public final class SmartWatchTopology {
           LOG.info(logMessage);
         });
 
-    Config config = Config.defaultConfig();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    //Config config = Config.defaultConfig();
+    Config config = Config.newBuilder()
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, processingGraphBuilder);
+    }
   }
 }

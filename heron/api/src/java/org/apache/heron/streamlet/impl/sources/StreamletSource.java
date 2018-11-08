@@ -21,6 +21,7 @@
 package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.BaseRichSpout;
 import org.apache.heron.api.state.State;
@@ -36,9 +37,14 @@ public abstract class StreamletSource extends BaseRichSpout
     implements IStatefulComponent<Serializable, Serializable> {
 
   private static final long serialVersionUID = 8583965332619565343L;
+  private static final Logger LOG = Logger.getLogger(StreamletSource.class.getName());
 
   static final String OUTPUT_FIELD_NAME = "output";
   static final String MSGID_FIELD_NAME = "msgId";
+
+  public StreamletSource() {
+    LOG.info(">>>> StreamletSource Constructor called");
+  }
 
   @Override
   public void initState(State<Serializable, Serializable> state) { }

@@ -29,6 +29,7 @@ import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.WindowConfig;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology is an implementation of the classic word count example
@@ -39,12 +40,15 @@ import org.apache.heron.streamlet.WindowConfig;
  * is encountered within each time window (in this case a tumbling count
  * window of 50 operations). The result is then logged.
  */
-public final class WindowedWordCountTopology {
-  private WindowedWordCountTopology() {
+public final class AckingWindowedWordCountTopology {
+
+  private static boolean useSimulator = true;
+
+  private AckingWindowedWordCountTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(WindowedWordCountTopology.class.getName());
+      Logger.getLogger(AckingWindowedWordCountTopology.class.getName());
 
   private static final List<String> SENTENCES = Arrays.asList(
       "I have nothing to declare but my genius",
@@ -54,6 +58,12 @@ public final class WindowedWordCountTopology {
   );
 
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder processingGraphBuilder = Builder.newBuilder();
 
     processingGraphBuilder
@@ -88,15 +98,23 @@ public final class WindowedWordCountTopology {
     // argument (or else the default of 2 will be used).
     int topologyParallelism = StreamletUtils.getParallelism(args, 2);
 
+    //    Config config = Config.newBuilder()
+    //        .setNumContainers(topologyParallelism)
+    //        .build();
     Config config = Config.newBuilder()
-        .setNumContainers(topologyParallelism)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .build();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, processingGraphBuilder);
+    }
   }
 }

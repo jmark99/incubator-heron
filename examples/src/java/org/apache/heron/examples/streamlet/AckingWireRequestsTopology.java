@@ -43,12 +43,12 @@ import org.apache.heron.streamlet.Streamlet;
  * fraud detection filter that ensures that no "bad" customers are allowed to
  * make requests.
  */
-public final class WireRequestsTopology {
-  private WireRequestsTopology() {
+public final class AckingWireRequestsTopology {
+  private AckingWireRequestsTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(WireRequestsTopology.class.getName());
+      Logger.getLogger(AckingWireRequestsTopology.class.getName());
 
   /**
    * A list of current customers (some good, some bad).
@@ -81,6 +81,10 @@ public final class WireRequestsTopology {
     private static final long serialVersionUID = 1311441220738558016L;
     private String customerId;
     private int amount;
+
+    WireRequest() {
+      this(50);
+    }
 
     WireRequest(long delay) {
       // The pace at which requests are generated is throttled. Different
@@ -154,21 +158,21 @@ public final class WireRequestsTopology {
     Streamlet<WireRequest> quietBranch = builder.newSource(() -> new WireRequest(20))
         .setNumPartitions(1)
         .setName("quiet-branch-requests")
-        .filter(WireRequestsTopology::checkRequestAmount)
+        .filter(AckingWireRequestsTopology::checkRequestAmount)
         .setName("quiet-branch-check-balance");
 
     // Requests from the "medium" bank branch (medium throttling).
     Streamlet<WireRequest> mediumBranch = builder.newSource(() -> new WireRequest(10))
         .setNumPartitions(2)
         .setName("medium-branch-requests")
-        .filter(WireRequestsTopology::checkRequestAmount)
+        .filter(AckingWireRequestsTopology::checkRequestAmount)
         .setName("medium-branch-check-balance");
 
     // Requests from the "busy" bank branch (low throttling).
     Streamlet<WireRequest> busyBranch = builder.newSource(() -> new WireRequest(5))
         .setNumPartitions(4)
         .setName("busy-branch-requests")
-        .filter(WireRequestsTopology::checkRequestAmount)
+        .filter(AckingWireRequestsTopology::checkRequestAmount)
         .setName("busy-branch-check-balance");
 
     // Here, the streamlets for the three bank branches are united into one. The fraud
@@ -180,12 +184,12 @@ public final class WireRequestsTopology {
         .union(busyBranch)
         .setName("union-2")
         .setNumPartitions(4)
-        .filter(WireRequestsTopology::fraudDetect)
+        .filter(AckingWireRequestsTopology::fraudDetect)
         .setName("all-branches-fraud-detect")
         .log();
 
     Config config = Config.newBuilder()
-        .setDeliverySemantics(Config.DeliverySemantics.EFFECTIVELY_ONCE)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .setNumContainers(2)
         .build();
 

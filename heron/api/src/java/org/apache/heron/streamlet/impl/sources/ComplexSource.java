@@ -22,7 +22,10 @@ package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.SpoutOutputCollector;
@@ -32,6 +35,9 @@ import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.impl.ContextImpl;
+
+import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
+import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
 
 /**
  * SupplierSource is a way to wrap a supplier function inside a Heron Spout.
@@ -46,10 +52,14 @@ public class ComplexSource<R> extends StreamletSource {
   private SpoutOutputCollector collector;
   private State<Serializable, Serializable> state;
 
-  public ComplexSource(Source<R> generator) {
+  private Map<String, Collection<R>> cache = new HashMap<>();
+  private boolean ackEnabled = false;
+  private String msgId = null;
 
+  public ComplexSource(Source<R> generator) {
     LOG.info(">>>> Using ComplexSource...");
     this.generator = generator;
+    msgId = getId();
   }
 
   @Override
@@ -64,15 +74,55 @@ public class ComplexSource<R> extends StreamletSource {
     collector = outputCollector;
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
+    ackEnabled = isAckingEnabled(map, topologyContext);
+  }
+
+  private boolean isAckingEnabled(Map map, TopologyContext topologyContext) {
+    ContextImpl context = new ContextImpl(topologyContext, map, null);
+    return context.getConfig().get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
   }
 
   @Override
   public void nextTuple() {
     Collection<R> val = generator.get();
+    if (!ackEnabled) {
+      msgId = null;
+    } else {
+      msgId = getId();
+      cache.put(msgId, val);
+    }
     if (val != null) {
       for (R tuple : val) {
-        collector.emit(new Values(tuple, null), null);
+        collector.emit(new Values(tuple), msgId);
+        LOG.info(">>>> COMPLEXSOURCE::nextTuple -> EMIT " + new Values(tuple, msgId));
       }
     }
+  }
+
+
+  @Override public void ack(Object mid) {
+    if (ackEnabled) {
+      final Collection<R> data = cache.remove(mid);
+      LOG.info(">>>> COMPLEXSOURCE::ack  --------> ACKED [" + data + ", " + mid + "]");
+    }
+  }
+
+  @Override public void fail(Object mid) {
+    if (ackEnabled) {
+      Values values = new Values(cache.get(mid));
+      LOG.info(">>>> COMPLEXSOURCE::fail --------> FAIL  [" + values + ", " + mid + "]");
+      collector.emit(values, mid);
+    }
+  }
+  
+  
+  private static AtomicLong idCounter = new AtomicLong();
+
+  private String getId() {
+    return getUUID();
+  }
+
+  private String getUUID() {
+    return UUID.randomUUID().toString();
   }
 }

@@ -30,17 +30,21 @@ import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.SerializableTransformer;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * In this topology, a supplier generates an indefinite series of random integers between 1
  * and 100. From there, a series of transform operations are applied that ultimately leave
  * the original value unchanged.
  */
-public final class TransformsTopology {
-  private TransformsTopology() {
+public final class AckingTransformsTopology {
+
+  private static boolean useSimulator = true;
+
+  private AckingTransformsTopology() {
   }
 
-  private static final Logger LOG = Logger.getLogger(TransformsTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(AckingTransformsTopology.class.getName());
 
   /**
    * This transformer leaves incoming values unmodified. The Consumer simply accepts incoming
@@ -100,6 +104,12 @@ public final class TransformsTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder builder = Builder.newBuilder();
 
     /**
@@ -116,13 +126,21 @@ public final class TransformsTopology {
         .transform(new IncrementTransformer(-3))
         .log();
 
-    Config config = Config.defaultConfig();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    //Config config = Config.defaultConfig();
+    Config config = Config.newBuilder()
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, builder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }

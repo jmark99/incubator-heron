@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 
 package org.apache.heron.examples.streamlet;
 
@@ -35,6 +34,7 @@ import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Sink;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates how sinks work in the Heron Streamlet API for Java.
@@ -42,12 +42,14 @@ import org.apache.heron.streamlet.Sink;
  * from the source streamlet (an indefinite series of randomly generated
  * integers) is written to that temporary file.
  */
-public final class FilesystemSinkTopology {
-  private FilesystemSinkTopology() {
+public final class AckingFilesystemSinkTopology {
+
+  private static boolean useSimulator = true;
+
+  private AckingFilesystemSinkTopology() {
   }
 
-  private static final Logger LOG =
-      Logger.getLogger(FilesystemSinkTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(AckingFilesystemSinkTopology.class.getName());
 
   /**
    * Implements the Sink interface, which defines what happens when the toSink
@@ -59,6 +61,7 @@ public final class FilesystemSinkTopology {
     private File tempFile;
 
     FilesystemSink(File f) {
+      LOG.info(">>>> Using FilesystemSink(" + f.getAbsolutePath() + ")");
       this.tempFile = f;
     }
 
@@ -83,11 +86,7 @@ public final class FilesystemSinkTopology {
       try {
         Files.write(tempFilePath, bytes, StandardOpenOption.APPEND);
         LOG.info(
-            String.format("Wrote %s to %s",
-                new String(bytes),
-                tempFilePath.toAbsolutePath()
-            )
-        );
+            String.format(">>>> Wrote %s to %s", new String(bytes), tempFilePath.toAbsolutePath()));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -105,25 +104,25 @@ public final class FilesystemSinkTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
-    Builder processingGraphBuilder = Builder.newBuilder();
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
+    Builder builder = Builder.newBuilder();
 
     // Creates a temporary file to write output into.
     File file = File.createTempFile("filesystem-sink-example", ".tmp");
 
-    LOG.info(
-        String.format("Ready to write to file %s",
-            file.getAbsolutePath()
-        )
-    );
+    LOG.info(String.format("Ready to write to file %s", file.getAbsolutePath()));
 
-    processingGraphBuilder
-        .newSource(() -> {
-          // This applies a "brake" that makes the processing graph write
-          // to the temporary file at a reasonable, readable pace.
-          StreamletUtils.sleep(500);
-          return ThreadLocalRandom.current().nextInt(100);
-        })
-        .setName("incoming-integers")
+    builder.newSource(() -> {
+      // This applies a "brake" that makes the processing graph write
+      // to the temporary file at a reasonable, readable pace.
+      StreamletUtils.sleep(500);
+      return ThreadLocalRandom.current().nextInt(100);
+    }).setName("incoming-integers")
         // Here, the FilesystemSink implementation of the Sink
         // interface is passed to the toSink function.
         .toSink(new FilesystemSink<>(file));
@@ -133,15 +132,20 @@ public final class FilesystemSinkTopology {
     // argument (or else the default of 2 will be used).
     int topologyParallelism = StreamletUtils.getParallelism(args, 2);
 
-    Config config = Config.newBuilder()
-        .setNumContainers(topologyParallelism)
-        .build();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    Config config = Config.newBuilder().setNumContainers(topologyParallelism)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE).build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    //new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }

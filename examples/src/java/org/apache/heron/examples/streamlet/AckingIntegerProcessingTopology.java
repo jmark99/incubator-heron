@@ -21,12 +21,14 @@
 package org.apache.heron.examples.streamlet;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Logger;
 
 import org.apache.heron.examples.streamlet.utils.StreamletUtils;
 import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This is a very simple topology that shows a series of streamlet operations
@@ -35,8 +37,11 @@ import org.apache.heron.streamlet.Streamlet;
  * of an indefinite stream of zeroes. At that point, all 2s are excluded from the
  * streamlet. The final output of the processing graph is then logged.
  */
-public final class IntegerProcessingTopology {
-  private IntegerProcessingTopology() {
+public final class AckingIntegerProcessingTopology {
+
+  private static final Logger LOG = Logger.getLogger(AckingIntegerProcessingTopology.class.getName());
+
+  private AckingIntegerProcessingTopology() {
   }
 
   // Heron resources to be applied to the topology
@@ -44,36 +49,62 @@ public final class IntegerProcessingTopology {
   private static final int GIGABYTES_OF_RAM = 8;
   private static final int NUM_CONTAINERS = 2;
 
+  private static boolean useSimulator = true;
+
   /**
    * All Heron topologies require a main function that defines the topology's behavior
    * at runtime
    */
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder builder = Builder.newBuilder();
 
-    Streamlet<Integer> zeroes = builder.newSource(() -> 0);
+    Streamlet<Integer> zeroes = builder.newSource(() -> {
+      //if (useSimulator)
+      //  StreamletUtils.sleep(5000);
+      //else
+      StreamletUtils.sleep(1000);
+      return 0;});
 
-    builder.newSource(() -> ThreadLocalRandom.current().nextInt(1, 11))
+    //builder.newSource(() -> ThreadLocalRandom.current().nextInt(1, 11))
+    builder.newSource(() -> {
+      //if (useSimulator)
+      //  StreamletUtils.sleep(1000);
+      //else
+      StreamletUtils.sleep(50);
+      return ThreadLocalRandom.current()
+          .nextInt(1, 11); })
         .setName("random-ints")
-        .map(i -> i + 1)
-        .setName("add-one")
+        .map(i -> i * 10)
+        .setName("multi-ten")
         .union(zeroes)
         .setName("unify-streams")
-        .filter(i -> i != 2)
-        .setName("remove-twos")
+        .filter(i -> i != 20)
+        .setName("remove-twenties")
         .log();
 
     Config config = Config.newBuilder()
         .setNumContainers(NUM_CONTAINERS)
         .setPerContainerRamInGigabytes(GIGABYTES_OF_RAM)
         .setPerContainerCpu(CPU)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .build();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, builder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }
