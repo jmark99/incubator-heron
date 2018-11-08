@@ -30,6 +30,7 @@ import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates the usage of a simple repartitioning algorithm
@@ -42,11 +43,13 @@ import org.apache.heron.streamlet.Streamlet;
  * element is routed.
  */
 public final class RepartitionTopology {
+
+  private static boolean useSimulator = true;
+
+  private static final Logger LOG = Logger.getLogger(RepartitionTopology.class.getName());
+
   private RepartitionTopology() {
   }
-
-  private static final Logger LOG =
-      Logger.getLogger(RepartitionTopology.class.getName());
 
   /**
    * The repartition function that determines to which partition each incoming
@@ -83,9 +86,15 @@ public final class RepartitionTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
-    Builder processingGraphBuilder = Builder.newBuilder();
 
-    Streamlet<Integer> randomIntegers = processingGraphBuilder
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
+    Builder builder = Builder.newBuilder();
+
+    Streamlet<Integer> randomIntegers = builder
         .newSource(() -> {
           // Random integers are emitted every 50 milliseconds
           StreamletUtils.sleep(50);
@@ -105,13 +114,22 @@ public final class RepartitionTopology {
         .setName("reduce-partitions-for-logging-operation")
         .log();
 
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
 
-    Config config = Config.defaultConfig();
+    //Config config = Config.defaultConfig();
+    Config config = Config.newBuilder()
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
   }
 }

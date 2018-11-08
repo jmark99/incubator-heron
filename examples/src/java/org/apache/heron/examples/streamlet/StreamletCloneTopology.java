@@ -34,6 +34,7 @@ import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Sink;
 import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates clone operations on streamlets in the Heron
@@ -45,6 +46,9 @@ import org.apache.heron.streamlet.Streamlet;
  * logging sink while the other goes to a dummy database sink.
  */
 public final class StreamletCloneTopology {
+
+  private static boolean useSimulator = true;
+
   private StreamletCloneTopology() {
   }
 
@@ -131,6 +135,12 @@ public final class StreamletCloneTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder processingGraphBuilder = Builder.newBuilder();
 
     /**
@@ -158,11 +168,16 @@ public final class StreamletCloneTopology {
         .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .build();
 
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
-
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, processingGraphBuilder);
+    }
   }
 }

@@ -35,6 +35,7 @@ import org.apache.heron.streamlet.JoinType;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Streamlet;
 import org.apache.heron.streamlet.WindowConfig;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates the use of join operations in the Heron
@@ -45,6 +46,14 @@ import org.apache.heron.streamlet.WindowConfig;
  * over the specified time window.
  */
 public final class ImpressionsAndClicksTopology {
+
+  private static boolean useSimulator = true;
+
+  // Heron resources to be applied to the topology
+  private static final double CPU = 1.5;
+  private static final int GIGABYTES_OF_RAM = 8;
+  private static final int NUM_CONTAINERS = 2;
+
   private ImpressionsAndClicksTopology() {
   }
 
@@ -82,6 +91,7 @@ public final class ImpressionsAndClicksTopology {
       this.userId = StreamletUtils.randomFromList(USERS);
       this.impressionId = UUID.randomUUID().toString();
       LOG.info(String.format("Emitting impression: %s", this));
+      StreamletUtils.sleep(100);
     }
 
     String getAdId() {
@@ -115,6 +125,7 @@ public final class ImpressionsAndClicksTopology {
       this.userId = StreamletUtils.randomFromList(USERS);
       this.clickId = UUID.randomUUID().toString();
       LOG.info(String.format("Emitting click: %s", this));
+      StreamletUtils.sleep(100);
     }
 
     String getAdId() {
@@ -139,6 +150,12 @@ public final class ImpressionsAndClicksTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder processingGraphBuilder = Builder.newBuilder();
 
     // A KVStreamlet is produced. Each element is a KeyValue object where the key
@@ -191,13 +208,28 @@ public final class ImpressionsAndClicksTopology {
               kw.getValue()));
         });
 
-    Config config = Config.defaultConfig();
+//    Config config = Config.defaultConfig();
+//    Config config = Config.newBuilder()
+//        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+//        .build();
 
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    Config config = Config.newBuilder()
+        .setNumContainers(NUM_CONTAINERS)
+        .setPerContainerRamInGigabytes(GIGABYTES_OF_RAM)
+        .setPerContainerCpu(CPU)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, processingGraphBuilder);
+    }
   }
 }

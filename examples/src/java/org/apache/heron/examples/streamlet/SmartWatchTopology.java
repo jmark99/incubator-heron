@@ -34,6 +34,7 @@ import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.KeyValue;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.WindowConfig;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology shows an example usage of a reduce function. A source streamlet emits smart watch readings every 10
@@ -43,6 +44,9 @@ import org.apache.heron.streamlet.WindowConfig;
  * result is logged using a consume operation (which allows for a formatted log).
  */
 public final class SmartWatchTopology {
+
+  private static boolean useSimulator = true;
+
   private SmartWatchTopology() {
   }
 
@@ -75,6 +79,12 @@ public final class SmartWatchTopology {
   }
 
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder processingGraphBuilder = Builder.newBuilder();
 
     processingGraphBuilder.newSource(SmartWatchReading::new)
@@ -117,13 +127,21 @@ public final class SmartWatchTopology {
           LOG.info(logMessage);
         });
 
-    Config config = Config.defaultConfig();
-
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
+    //Config config = Config.defaultConfig();
+    Config config = Config.newBuilder()
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
+        .build();
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, processingGraphBuilder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, processingGraphBuilder);
+    }
   }
 }

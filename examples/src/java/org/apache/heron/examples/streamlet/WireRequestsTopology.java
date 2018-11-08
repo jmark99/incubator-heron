@@ -82,6 +82,10 @@ public final class WireRequestsTopology {
     private String customerId;
     private int amount;
 
+    WireRequest() {
+      this(50);
+    }
+
     WireRequest(long delay) {
       // The pace at which requests are generated is throttled. Different
       // throttles are applied to different bank branches.
@@ -185,7 +189,7 @@ public final class WireRequestsTopology {
         .log();
 
     Config config = Config.newBuilder()
-        .setDeliverySemantics(Config.DeliverySemantics.EFFECTIVELY_ONCE)
+        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
         .setNumContainers(2)
         .build();
 

@@ -72,11 +72,13 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    R obj = (R) tuple.getValue(0);
+
     if (dropMessage(10)) {
-      LOG.info(">>>> ComplexSink dropping message: " + (Object) tuple.toString());
+      LOG.info(">>> LogSink dropped msg: " + obj);
       return;
     }
-    R obj = (R) tuple.getValue(0);
+
     sink.put(obj);
     collector.ack(tuple);
     LOG.info(">>>  ComplexSink sent ack for " + obj);

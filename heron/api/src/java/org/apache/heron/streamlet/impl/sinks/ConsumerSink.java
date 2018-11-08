@@ -53,10 +53,12 @@ public class ConsumerSink<R> extends StreamletOperator<R, R> {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    R obj = (R) tuple.getValue(0);
+
     if (dropMessage(10)) {
+      LOG.info(">>> ConsumerSink dropped msg: " + obj);
       return;
     }
-    R obj = (R) tuple.getValue(0);
     consumer.accept(obj);
     collector.ack(tuple);
     LOG.info(">>>  ConsumerSink sent ack...for " + obj); //for " + tuple.toString());

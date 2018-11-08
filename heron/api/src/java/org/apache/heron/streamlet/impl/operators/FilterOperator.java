@@ -56,8 +56,8 @@ public class FilterOperator<R> extends StreamletOperator<R, R> {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    //LOG.info(">>>>\t FilterOperator::execute(" + tuple + ")");
     R obj = (R) tuple.getValue(0);
+    //LOG.info(">>> \t FilterOperator::execute(" + obj + ")");
     if (filterFn.test(obj)) {
       collector.emit(tuple, new Values(obj));
     }
