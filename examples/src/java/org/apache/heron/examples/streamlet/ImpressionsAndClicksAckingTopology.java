@@ -45,7 +45,7 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * Finally, a reduce function counts the number of impression/click matches
  * over the specified time window.
  */
-public final class AckingImpressionsAndClicksTopology {
+public final class ImpressionsAndClicksAckingTopology {
 
   private static boolean useSimulator = true;
 
@@ -54,11 +54,11 @@ public final class AckingImpressionsAndClicksTopology {
   private static final int GIGABYTES_OF_RAM = 8;
   private static final int NUM_CONTAINERS = 2;
 
-  private AckingImpressionsAndClicksTopology() {
+  private ImpressionsAndClicksAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingImpressionsAndClicksTopology.class.getName());
+      Logger.getLogger(ImpressionsAndClicksAckingTopology.class.getName());
 
   /**
    * A list of company IDs to be used to generate random clicks and impressions.

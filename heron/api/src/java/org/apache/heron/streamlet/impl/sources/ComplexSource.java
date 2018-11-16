@@ -114,8 +114,7 @@ public class ComplexSource<R> extends StreamletSource {
       collector.emit(values, mid);
     }
   }
-  
-  
+
   private static AtomicLong idCounter = new AtomicLong();
 
   private String getId() {

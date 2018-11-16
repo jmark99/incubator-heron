@@ -45,15 +45,15 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * streamlet is cloned into two. One of the cloned streams goes to a custom
  * logging sink while the other goes to a dummy database sink.
  */
-public final class AckingStreamletCloneTopology {
+public final class StreamletCloneAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private AckingStreamletCloneTopology() {
+  private StreamletCloneAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingStreamletCloneTopology.class.getName());
+      Logger.getLogger(StreamletCloneAckingTopology.class.getName());
 
   /**
    * A list of players of the game ("player1" through "player100").

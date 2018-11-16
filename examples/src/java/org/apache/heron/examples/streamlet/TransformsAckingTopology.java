@@ -37,14 +37,14 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * and 100. From there, a series of transform operations are applied that ultimately leave
  * the original value unchanged.
  */
-public final class AckingTransformsTopology {
+public final class TransformsAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private AckingTransformsTopology() {
+  private TransformsAckingTopology() {
   }
 
-  private static final Logger LOG = Logger.getLogger(AckingTransformsTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(TransformsAckingTopology.class.getName());
 
   /**
    * This transformer leaves incoming values unmodified. The Consumer simply accepts incoming

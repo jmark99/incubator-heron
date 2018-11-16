@@ -20,14 +20,19 @@
 
 package org.apache.heron.examples.streamlet;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import org.apache.heron.examples.streamlet.utils.StreamletUtils;
 import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
+import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
-import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.Sink;
+import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
@@ -37,11 +42,11 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * of an indefinite stream of zeroes. At that point, all 2s are excluded from the
  * streamlet. The final output of the processing graph is then logged.
  */
-public final class AckingIntegerProcessingTopology {
+public final class ComplexSourceAckingTopology {
 
-  private static final Logger LOG = Logger.getLogger(AckingIntegerProcessingTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(ComplexSourceAckingTopology.class.getName());
 
-  private AckingIntegerProcessingTopology() {
+  private ComplexSourceAckingTopology() {
   }
 
   // Heron resources to be applied to the topology
@@ -50,6 +55,41 @@ public final class AckingIntegerProcessingTopology {
   private static final int NUM_CONTAINERS = 2;
 
   private static boolean useSimulator = true;
+
+  private static class IntegerSource implements Source<Integer> {
+
+    Random rnd = new Random();
+    List<Integer> intList;
+
+    IntegerSource() {
+      intList = new ArrayList<>();
+    }
+
+    /**
+     * The setup functions defines the instantiation logic for the source.
+     * Here, a Pulsar client and consumer are created that will listen on
+     * the Pulsar topic.
+     */
+    public void setup(Context context) {
+    }
+
+    /**
+     * The get function defines how elements for the source streamlet are
+     * "gotten." In this case, the Pulsar consumer for the specified topic
+     * listens for incoming messages.
+     */
+    public Collection<Integer> get() {
+      intList.clear();
+      intList.add(1);
+      intList.add(2);
+      intList.add(3);
+      StreamletUtils.sleep(500);
+      return intList;
+    }
+
+    public void cleanup() {
+    }
+  }
 
   /**
    * All Heron topologies require a main function that defines the topology's behavior
@@ -64,28 +104,11 @@ public final class AckingIntegerProcessingTopology {
 
     Builder builder = Builder.newBuilder();
 
-    Streamlet<Integer> zeroes = builder.newSource(() -> {
-      //if (useSimulator)
-      //  StreamletUtils.sleep(5000);
-      //else
-      StreamletUtils.sleep(1000);
-      return 0;});
+    Source<Integer> integerSource = new IntegerSource();
 
-    //builder.newSource(() -> ThreadLocalRandom.current().nextInt(1, 11))
-    builder.newSource(() -> {
-      //if (useSimulator)
-      //  StreamletUtils.sleep(1000);
-      //else
-      StreamletUtils.sleep(50);
-      return ThreadLocalRandom.current()
-          .nextInt(1, 11); })
-        .setName("random-ints")
-        .map(i -> i * 10)
-        .setName("multi-ten")
-        .union(zeroes)
-        .setName("unify-streams")
-        .filter(i -> i != 20)
-        .setName("remove-twenties")
+    builder.newSource(integerSource)
+        .setName("integer-source")
+        .map(i -> i*2)
         .log();
 
     Config config = Config.newBuilder()

@@ -42,13 +42,13 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * of that number then determines to which topology instance (partition) the
  * element is routed.
  */
-public final class AckingRepartitionTopology {
+public final class RepartitionAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private static final Logger LOG = Logger.getLogger(AckingRepartitionTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(RepartitionAckingTopology.class.getName());
 
-  private AckingRepartitionTopology() {
+  private RepartitionAckingTopology() {
   }
 
   /**
@@ -105,7 +105,7 @@ public final class AckingRepartitionTopology {
 
     randomIntegers
         // The specific repartition logic is applied here
-        .repartition(8, AckingRepartitionTopology::repartitionStreamlet)
+        .repartition(8, RepartitionAckingTopology::repartitionStreamlet)
         .setName("repartition-incoming-values")
         // Here, a generic repartition logic is applied (simply
         // changing the number of partitions without specifying

@@ -42,7 +42,7 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * sensor readings are fed into the graph every two seconds (a simple
  * filter is also applied to this source streamlet prior to logging).
  */
-public final class AckingFormattedOutputTopology {
+public final class FormattedOutputAckingTopology {
 
   private static boolean useSimulator = true;
 
@@ -50,11 +50,11 @@ public final class AckingFormattedOutputTopology {
   private static final int GIGABYTES_OF_RAM = 8;
   private static final int NUM_CONTAINERS = 2;
 
-  private AckingFormattedOutputTopology() {
+  private FormattedOutputAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingFormattedOutputTopology.class.getName());
+      Logger.getLogger(FormattedOutputAckingTopology.class.getName());
 
   /**
    * A list of devices emitting sensor readings ("device1" through "device100").

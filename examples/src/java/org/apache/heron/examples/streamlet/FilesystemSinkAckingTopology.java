@@ -42,14 +42,14 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * from the source streamlet (an indefinite series of randomly generated
  * integers) is written to that temporary file.
  */
-public final class AckingFilesystemSinkTopology {
+public final class FilesystemSinkAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private AckingFilesystemSinkTopology() {
+  private FilesystemSinkAckingTopology() {
   }
 
-  private static final Logger LOG = Logger.getLogger(AckingFilesystemSinkTopology.class.getName());
+  private static final Logger LOG = Logger.getLogger(FilesystemSinkAckingTopology.class.getName());
 
   /**
    * Implements the Sink interface, which defines what happens when the toSink

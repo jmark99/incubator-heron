@@ -31,6 +31,7 @@ import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates how different streamlets can be united into one
@@ -43,12 +44,15 @@ import org.apache.heron.streamlet.Streamlet;
  * fraud detection filter that ensures that no "bad" customers are allowed to
  * make requests.
  */
-public final class AckingWireRequestsTopology {
-  private AckingWireRequestsTopology() {
+public final class WireRequestsAckingTopology {
+
+  private static boolean useSimulator = true;
+
+  private WireRequestsAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingWireRequestsTopology.class.getName());
+      Logger.getLogger(WireRequestsAckingTopology.class.getName());
 
   /**
    * A list of current customers (some good, some bad).
@@ -152,27 +156,33 @@ public final class AckingWireRequestsTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
+
+    if (args != null && args.length > 0) {
+      useSimulator = false;
+    }
+    LOG.info(">>>> ****** useSimulator : " + useSimulator);
+
     Builder builder = Builder.newBuilder();
 
     // Requests from the "quiet" bank branch (high throttling).
     Streamlet<WireRequest> quietBranch = builder.newSource(() -> new WireRequest(20))
         .setNumPartitions(1)
         .setName("quiet-branch-requests")
-        .filter(AckingWireRequestsTopology::checkRequestAmount)
+        .filter(WireRequestsAckingTopology::checkRequestAmount)
         .setName("quiet-branch-check-balance");
 
     // Requests from the "medium" bank branch (medium throttling).
     Streamlet<WireRequest> mediumBranch = builder.newSource(() -> new WireRequest(10))
         .setNumPartitions(2)
         .setName("medium-branch-requests")
-        .filter(AckingWireRequestsTopology::checkRequestAmount)
+        .filter(WireRequestsAckingTopology::checkRequestAmount)
         .setName("medium-branch-check-balance");
 
     // Requests from the "busy" bank branch (low throttling).
     Streamlet<WireRequest> busyBranch = builder.newSource(() -> new WireRequest(5))
         .setNumPartitions(4)
         .setName("busy-branch-requests")
-        .filter(AckingWireRequestsTopology::checkRequestAmount)
+        .filter(WireRequestsAckingTopology::checkRequestAmount)
         .setName("busy-branch-check-balance");
 
     // Here, the streamlets for the three bank branches are united into one. The fraud
@@ -184,7 +194,7 @@ public final class AckingWireRequestsTopology {
         .union(busyBranch)
         .setName("union-2")
         .setNumPartitions(4)
-        .filter(AckingWireRequestsTopology::fraudDetect)
+        .filter(WireRequestsAckingTopology::fraudDetect)
         .setName("all-branches-fraud-detect")
         .log();
 
@@ -193,11 +203,17 @@ public final class AckingWireRequestsTopology {
         .setNumContainers(2)
         .build();
 
-    // Fetches the topology name from the first command-line argument
-    String topologyName = StreamletUtils.getTopologyName(args);
-
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    new Runner().run(topologyName, config, builder);
+    if (useSimulator) {
+      StreamletUtils.runInSimulatorMode((BuilderImpl) builder, config);
+    } else {
+      // Fetches the topology name from the first command-line argument
+      String topologyName = StreamletUtils.getTopologyName(args);
+      // Finally, the processing graph and configuration are passed to the Runner, which converts
+      // the graph into a Heron topology that can be run in a Heron cluster.
+      new Runner().run(topologyName, config, builder);
+    }
+
   }
 }

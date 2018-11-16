@@ -50,15 +50,16 @@ public class LogSink<R> extends StreamletOperator<R, R> {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    LOG.info(">>> LogSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(10)) {
+    if (dropMessage(0)) {
       LOG.info(">>> LogSink dropped msg: " + obj);
       return;
     }
 
-    LOG.info(">>>  " + String.valueOf(obj));
+    LOG.info(">>> " + String.valueOf(obj));
     collector.ack(tuple);
-    LOG.info(">>>  LogSink sent ack for " + obj);
+    LOG.info(">>> LogSink sent ack for " + obj);
   }
 }

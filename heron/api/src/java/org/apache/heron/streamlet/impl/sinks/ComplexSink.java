@@ -72,10 +72,11 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    LOG.info(">>> ComplexSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(10)) {
-      LOG.info(">>> LogSink dropped msg: " + obj);
+    if (dropMessage(0)) {
+      LOG.info(">>> ComplexSink dropped msg: " + obj);
       return;
     }
 

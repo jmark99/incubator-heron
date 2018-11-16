@@ -80,19 +80,6 @@ public class TupleImpl implements Tuple {
     }
   }
 
-  @Override public String toString() {
-    StringBuilder tinfo = new StringBuilder();
-    tinfo.append(" >>>> _TUPLE: [");
-    tinfo.append(" (src: " + getSourceComponent() + "),");
-    //tinfo.append(" (msgId: " + getStringByField("msgId") + "),");
-    //String output = getStringByField("output");
-    String output = getIntegerByField("output").toString();
-    tinfo.append(" (output: " + output + ")");
-    tinfo.append("]\n");
-    return tinfo.toString();
-  }
-
-
   public List<HeronTuples.RootId> getRoots() {
     return roots;
   }
@@ -251,15 +238,11 @@ public class TupleImpl implements Tuple {
     return stream.getId();
   }
 
-//  @Override public Object getMessageId() {
-//    return stream.getId();
-//  }
-
-//  @Override
-//  public String toString() {
-//    return "source: " + getSourceComponent() + ", stream: " + getSourceStreamId()
-//        + ", " + values.toString();
-//  }
+  @Override
+  public String toString() {
+    return "source: " + getSourceComponent() + ", stream: " + getSourceStreamId()
+        + ", " + values.toString();
+  }
 
   @Override
   public boolean equals(Object other) {

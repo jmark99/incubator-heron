@@ -16,15 +16,15 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
-public class AckingSmartWatchTopology {
+public class SmartWatchAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private AckingSmartWatchTopology() {
+  private SmartWatchAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingSmartWatchTopology.class.getName());
+      Logger.getLogger(SmartWatchAckingTopology.class.getName());
 
   private static final List<String> JOGGERS = Arrays.asList(
       "bill",
@@ -60,7 +60,7 @@ public class AckingSmartWatchTopology {
 
     Builder processingGraphBuilder = Builder.newBuilder();
 
-    processingGraphBuilder.newSource(AckingSmartWatchTopology.SmartWatchReading::new)
+    processingGraphBuilder.newSource(SmartWatchAckingTopology.SmartWatchReading::new)
         .setName("incoming-watch-readings")
         .reduceByKeyAndWindow(
             // Key extractor

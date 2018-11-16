@@ -40,15 +40,15 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * is encountered within each time window (in this case a tumbling count
  * window of 50 operations). The result is then logged.
  */
-public final class AckingWindowedWordCountTopology {
+public final class WindowedWordCountAckingTopology {
 
   private static boolean useSimulator = true;
 
-  private AckingWindowedWordCountTopology() {
+  private WindowedWordCountAckingTopology() {
   }
 
   private static final Logger LOG =
-      Logger.getLogger(AckingWindowedWordCountTopology.class.getName());
+      Logger.getLogger(WindowedWordCountAckingTopology.class.getName());
 
   private static final List<String> SENTENCES = Arrays.asList(
       "I have nothing to declare but my genius",
