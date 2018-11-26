@@ -17,14 +17,10 @@
  * under the License.
  */
 
-
 package org.apache.heron.streamlet.impl.operators;
 
-import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.heron.api.bolt.OutputCollector;
-import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Tuple;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableFunction;
@@ -39,22 +35,13 @@ public class MapOperator<R, T> extends StreamletOperator<R, T> {
   private static final long serialVersionUID = -1303096133107278700L;
   private SerializableFunction<? super R, ? extends T> mapFn;
 
-  private OutputCollector collector;
-
   public MapOperator(SerializableFunction<? super R, ? extends T> mapFn) {
     this.mapFn = mapFn;
-  }
-
-  @SuppressWarnings("rawtypes")
-  @Override
-  public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-    collector = outputCollector;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    //LOG.info(">>>>\t MapOperator::execute(" + tuple + ")");
     R obj = (R) tuple.getValue(0);
     T result = mapFn.apply(obj);
     collector.emit(tuple, new Values(result));

@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
 package org.apache.heron.streamlet.impl;
 
 import java.util.ArrayList;
@@ -26,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.apache.heron.api.grouping.NoneStreamGrouping;
+import org.apache.heron.api.grouping.StreamGrouping;
 import org.apache.heron.api.topology.TopologyBuilder;
 import org.apache.heron.streamlet.IStreamletOperator;
 import org.apache.heron.streamlet.JoinType;
@@ -36,10 +36,8 @@ import org.apache.heron.streamlet.SerializableBinaryOperator;
 import org.apache.heron.streamlet.SerializableConsumer;
 import org.apache.heron.streamlet.SerializableFunction;
 import org.apache.heron.streamlet.SerializablePredicate;
-import org.apache.heron.streamlet.SerializableSupplier;
 import org.apache.heron.streamlet.SerializableTransformer;
 import org.apache.heron.streamlet.Sink;
-import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.Streamlet;
 import org.apache.heron.streamlet.WindowConfig;
 import org.apache.heron.streamlet.impl.streamlets.ConsumerStreamlet;
@@ -53,11 +51,12 @@ import org.apache.heron.streamlet.impl.streamlets.MapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.ReduceByKeyAndWindowStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.RemapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SinkStreamlet;
-import org.apache.heron.streamlet.impl.streamlets.SourceStreamlet;
-import org.apache.heron.streamlet.impl.streamlets.SupplierStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.TransformStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.UnionStreamlet;
-import org.apache.heron.streamlet.impl.utils.StreamletUtils;
+
+import static org.apache.heron.streamlet.impl.utils.StreamletUtils.checkNotBlank;
+import static org.apache.heron.streamlet.impl.utils.StreamletUtils.checkNotNull;
+import static org.apache.heron.streamlet.impl.utils.StreamletUtils.require;
 
 /**
  * A Streamlet is a (potentially unbounded) ordered collection of tuples.
@@ -115,6 +114,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
     REMAP("remap"),
     SINK("sink"),
     SOURCE("generator"),
+    SPOUT("spout"),
     SUPPLIER("supplier"),
     TRANSFORM("transform"),
     UNION("union");
@@ -148,8 +148,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public Streamlet<R> setName(String sName) {
-    StreamletUtils.require(sName != null && !sName.trim().isEmpty(),
-        "Streamlet name cannot be null/blank");
+    checkNotBlank(sName, "Streamlet name cannot be null/blank");
+
     this.name = sName;
     return this;
   }
@@ -187,8 +187,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public Streamlet<R> setNumPartitions(int numPartitions) {
-    StreamletUtils.require(numPartitions > 0,
-        "Streamlet's partitions number should be > 0");
+    require(numPartitions > 0, "Streamlet's partitions number should be > 0");
+
     this.nPartitions = numPartitions;
     return this;
   }
@@ -248,27 +248,13 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   }
 
   /**
-   * Create a Streamlet based on the supplier function
-   * @param supplier The Supplier function to generate the elements
-   */
-  static <T> StreamletImpl<T> createSupplierStreamlet(SerializableSupplier<T> supplier) {
-    return new SupplierStreamlet<T>(supplier);
-  }
-
-  /**
-   * Create a Streamlet based on the generator function
-   * @param generator The Generator function to generate the elements
-   */
-  static <T> StreamletImpl<T> createGeneratorStreamlet(Source<T> generator) {
-    return new SourceStreamlet<T>(generator);
-  }
-
-  /**
    * Return a new Streamlet by applying mapFn to each element of this Streamlet
    * @param mapFn The Map Function that should be applied to each element
   */
   @Override
   public <T> Streamlet<T> map(SerializableFunction<R, ? extends T> mapFn) {
+    checkNotNull(mapFn, "mapFn cannot be null");
+
     MapStreamlet<R, T> retval = new MapStreamlet<>(this, mapFn);
     addChild(retval);
     return retval;
@@ -282,6 +268,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   @Override
   public <T> Streamlet<T> flatMap(
       SerializableFunction<R, ? extends Iterable<? extends T>> flatMapFn) {
+    checkNotNull(flatMapFn, "flatMapFn cannot be null");
+
     FlatMapStreamlet<R, T> retval = new FlatMapStreamlet<>(this, flatMapFn);
     addChild(retval);
     return retval;
@@ -294,6 +282,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   */
   @Override
   public Streamlet<R> filter(SerializablePredicate<R> filterFn) {
+    checkNotNull(filterFn, "filterFn cannot be null");
+
     FilterStreamlet<R> retval = new FilterStreamlet<>(this, filterFn);
     addChild(retval);
     return retval;
@@ -314,6 +304,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   @Override
   public Streamlet<R> repartition(int numPartitions,
                            SerializableBiFunction<R, Integer, List<Integer>> partitionFn) {
+    checkNotNull(partitionFn, "partitionFn cannot be null");
+
     RemapStreamlet<R> retval = new RemapStreamlet<>(this, partitionFn);
     retval.setNumPartitions(numPartitions);
     addChild(retval);
@@ -327,8 +319,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public List<Streamlet<R>> clone(int numClones) {
-    StreamletUtils.require(numClones > 0,
-        "Streamlet's clone number should be > 0");
+    require(numClones > 0, "Streamlet's clone number should be > 0");
     List<Streamlet<R>> retval = new ArrayList<>(numClones);
     for (int i = 0; i < numClones; ++i) {
       retval.add(repartition(getNumPartitions()));
@@ -341,7 +332,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    * The join is done over elements accumulated over a time window defined by windowCfg.
    * The elements are compared using the thisKeyExtractor for this streamlet with the
    * otherKeyExtractor for the other streamlet. On each matching pair, the joinFunction is applied.
-   * @param other The Streamlet that we are joining with.
+   * @param otherStreamlet The Streamlet that we are joining with.
    * @param thisKeyExtractor The function applied to a tuple of this streamlet to get the key
    * @param otherKeyExtractor The function applied to a tuple of the other streamlet to get the key
    * @param windowCfg This is a specification of what kind of windowing strategy you like to
@@ -350,10 +341,16 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public <K, S, T> Streamlet<KeyValue<KeyedWindow<K>, T>>
-        join(Streamlet<S> other, SerializableFunction<R, K> thisKeyExtractor,
+        join(Streamlet<S> otherStreamlet, SerializableFunction<R, K> thisKeyExtractor,
              SerializableFunction<S, K> otherKeyExtractor, WindowConfig windowCfg,
              SerializableBiFunction<R, S, ? extends T> joinFunction) {
-    return join(other, thisKeyExtractor, otherKeyExtractor,
+    checkNotNull(otherStreamlet, "otherStreamlet cannot be null");
+    checkNotNull(thisKeyExtractor, "thisKeyExtractor cannot be null");
+    checkNotNull(otherKeyExtractor, "otherKeyExtractor cannot be null");
+    checkNotNull(windowCfg, "windowCfg cannot be null");
+    checkNotNull(joinFunction, "joinFunction cannot be null");
+
+    return join(otherStreamlet, thisKeyExtractor, otherKeyExtractor,
         windowCfg, JoinType.INNER, joinFunction);
   }
 
@@ -364,7 +361,7 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    * The elements are compared using the thisKeyExtractor for this streamlet with the
    * otherKeyExtractor for the other streamlet. On each matching pair, the joinFunction is applied.
    * Types of joins {@link JoinType}
-   * @param other The Streamlet that we are joining with.
+   * @param otherStreamlet The Streamlet that we are joining with.
    * @param thisKeyExtractor The function applied to a tuple of this streamlet to get the key
    * @param otherKeyExtractor The function applied to a tuple of the other streamlet to get the key
    * @param windowCfg This is a specification of what kind of windowing strategy you like to
@@ -374,11 +371,17 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public <K, S, T> Streamlet<KeyValue<KeyedWindow<K>, T>>
-        join(Streamlet<S> other, SerializableFunction<R, K> thisKeyExtractor,
+        join(Streamlet<S> otherStreamlet, SerializableFunction<R, K> thisKeyExtractor,
              SerializableFunction<S, K> otherKeyExtractor, WindowConfig windowCfg,
              JoinType joinType, SerializableBiFunction<R, S, ? extends T> joinFunction) {
+    checkNotNull(otherStreamlet, "otherStreamlet cannot be null");
+    checkNotNull(thisKeyExtractor, "thisKeyExtractor cannot be null");
+    checkNotNull(otherKeyExtractor, "otherKeyExtractor cannot be null");
+    checkNotNull(windowCfg, "windowCfg cannot be null");
+    checkNotNull(joinType, "joinType cannot be null");
+    checkNotNull(joinFunction, "joinFunction cannot be null");
 
-    StreamletImpl<S> joinee = (StreamletImpl<S>) other;
+    StreamletImpl<S> joinee = (StreamletImpl<S>) otherStreamlet;
     JoinStreamlet<K, R, S, T> retval = JoinStreamlet.createJoinStreamlet(
         this, joinee, thisKeyExtractor, otherKeyExtractor, windowCfg, joinType, joinFunction);
     addChild(retval);
@@ -400,6 +403,11 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   public <K, V> Streamlet<KeyValue<KeyedWindow<K>, V>> reduceByKeyAndWindow(
       SerializableFunction<R, K> keyExtractor, SerializableFunction<R, V> valueExtractor,
       WindowConfig windowCfg, SerializableBinaryOperator<V> reduceFn) {
+    checkNotNull(keyExtractor, "keyExtractor cannot be null");
+    checkNotNull(valueExtractor, "valueExtractor cannot be null");
+    checkNotNull(windowCfg, "windowCfg cannot be null");
+    checkNotNull(reduceFn, "reduceFn cannot be null");
+
     ReduceByKeyAndWindowStreamlet<K, V, R> retval =
         new ReduceByKeyAndWindowStreamlet<>(this, keyExtractor, valueExtractor,
             windowCfg, reduceFn);
@@ -424,6 +432,11 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   public <K, T> Streamlet<KeyValue<KeyedWindow<K>, T>> reduceByKeyAndWindow(
       SerializableFunction<R, K> keyExtractor, WindowConfig windowCfg,
       T identity, SerializableBiFunction<T, R, ? extends T> reduceFn) {
+    checkNotNull(keyExtractor, "keyExtractor cannot be null");
+    checkNotNull(windowCfg, "windowCfg cannot be null");
+    checkNotNull(identity, "identity cannot be null");
+    checkNotNull(reduceFn, "reduceFn cannot be null");
+
     GeneralReduceByKeyAndWindowStreamlet<K, R, T> retval =
         new GeneralReduceByKeyAndWindowStreamlet<>(this, keyExtractor, windowCfg,
             identity, reduceFn);
@@ -436,8 +449,10 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    * the new streamlet will contain tuples belonging to both Streamlets
   */
   @Override
-  public Streamlet<R> union(Streamlet<? extends R> other) {
-    StreamletImpl<? extends R> joinee = (StreamletImpl<? extends R>) other;
+  public Streamlet<R> union(Streamlet<? extends R> otherStreamlet) {
+    checkNotNull(otherStreamlet, "otherStreamlet cannot be null");
+
+    StreamletImpl<? extends R> joinee = (StreamletImpl<? extends R>) otherStreamlet;
     UnionStreamlet<R> retval = new UnionStreamlet<>(this, joinee);
     addChild(retval);
     joinee.addChild(retval);
@@ -461,6 +476,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public void consume(SerializableConsumer<R> consumer) {
+    checkNotNull(consumer, "consumer cannot be null");
+
     ConsumerStreamlet<R> consumerStreamlet = new ConsumerStreamlet<>(this, consumer);
     addChild(consumerStreamlet);
   }
@@ -471,6 +488,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public void toSink(Sink<R> sink) {
+    checkNotNull(sink, "sink cannot be null");
+
     SinkStreamlet<R> sinkStreamlet = new SinkStreamlet<>(this, sink);
     addChild(sinkStreamlet);
   }
@@ -486,6 +505,8 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
   @Override
   public <T> Streamlet<T> transform(
       SerializableTransformer<R, ? extends T> serializableTransformer) {
+    checkNotNull(serializableTransformer, "serializableTransformer cannot be null");
+
     TransformStreamlet<R, T> transformStreamlet =
         new TransformStreamlet<>(this, serializableTransformer);
     addChild(transformStreamlet);
@@ -500,9 +521,28 @@ public abstract class StreamletImpl<R> implements Streamlet<R> {
    */
   @Override
   public <T> Streamlet<T> applyOperator(IStreamletOperator<R, T> operator) {
-    StreamletImpl<T> customStreamlet = new CustomStreamlet<>(this, operator);
+    checkNotNull(operator, "operator cannot be null");
+
+    // By default, NoneStreamGrouping stategy is used. In this stategy, tuples are forwarded
+    // from parent component to a ramdon one of all the instances of the child component,
+    // which is the same logic as shuffle grouping.
+    return applyOperator(operator, new NoneStreamGrouping());
+  }
+
+  /**
+   * Returns a new Streamlet by applying the operator on each element of this streamlet.
+   * @param operator The operator to be applied
+   * @param grouper The grouper to be applied with the operator
+   * @param <T> The return type of the transform
+   * @return Streamlet containing the output of the operation
+   */
+  @Override
+  public <T> Streamlet<T> applyOperator(IStreamletOperator<R, T> operator, StreamGrouping grouper) {
+    checkNotNull(operator, "operator can't be null");
+    checkNotNull(grouper, "grouper can't be null");
+
+    StreamletImpl<T> customStreamlet = new CustomStreamlet<>(this, operator, grouper);
     addChild(customStreamlet);
     return customStreamlet;
   }
-
 }

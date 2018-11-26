@@ -17,14 +17,16 @@
  * under the License.
  */
 
-
 package org.apache.heron.streamlet.impl.operators;
 
 import java.util.Random;
 import java.util.logging.Logger;
+import java.util.Map;
 
 import org.apache.heron.api.bolt.BaseRichBolt;
+import org.apache.heron.api.bolt.OutputCollector;
 import org.apache.heron.api.topology.OutputFieldsDeclarer;
+import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Fields;
 import org.apache.heron.streamlet.IStreamletRichOperator;
 
@@ -42,6 +44,16 @@ public abstract class StreamletOperator<R, T>
   private static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
 
   private Random rand = new Random(System.currentTimeMillis());
+
+  protected OutputCollector collector;
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public void prepare(Map<String, Object> map,
+                      TopologyContext topologyContext,
+                      OutputCollector outputCollector) {
+    collector = outputCollector;
+  }
 
   /**
    * The operators implementing streamlet functionality have some properties.

@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.heron.streamlet.impl;
 
 import java.util.Arrays;
@@ -28,11 +27,14 @@ import java.util.function.Function;
 
 import org.junit.Test;
 
+import org.apache.heron.api.grouping.ShuffleStreamGrouping;
 import org.apache.heron.api.topology.TopologyBuilder;
 import org.apache.heron.common.basics.ByteAmount;
 import org.apache.heron.resource.TestBasicBolt;
 import org.apache.heron.resource.TestBolt;
+import org.apache.heron.resource.TestSpout;
 import org.apache.heron.resource.TestWindowBolt;
+import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.IStreamletBasicOperator;
@@ -49,6 +51,7 @@ import org.apache.heron.streamlet.impl.streamlets.FlatMapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.JoinStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.MapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.ReduceByKeyAndWindowStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.SpoutStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SupplierStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.TransformStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.UnionStreamlet;
@@ -63,9 +66,11 @@ import static org.junit.Assert.fail;
  */
 public class StreamletImplTest {
 
+  private Builder builder = Builder.newBuilder();
+
   @Test
-  public void testBasicParams() throws Exception {
-    Streamlet<Double> sample = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testBasicParams() {
+    Streamlet<Double> sample = builder.newSource(() -> Math.random());
     sample.setName("MyStreamlet");
     sample.setNumPartitions(20);
     assertEquals("MyStreamlet", sample.getName());
@@ -80,15 +85,22 @@ public class StreamletImplTest {
   }
 
   @Test
-  public void testSupplierStreamlet() throws Exception {
-    Streamlet<Double> streamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testSupplierStreamlet() {
+    Streamlet<Double> streamlet = builder.newSource(() -> Math.random());
     assertTrue(streamlet instanceof SupplierStreamlet);
   }
 
   @Test
+  public void testSpoutStreamlet() {
+    TestSpout spout = new TestSpout();
+    Streamlet<Double> streamlet = builder.newSource(spout);
+    assertTrue(streamlet instanceof SpoutStreamlet);
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
-  public void testMapStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testMapStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20).map((num) -> num * 10);
     assertTrue(streamlet instanceof MapStreamlet);
     MapStreamlet<Double, Double> mStreamlet = (MapStreamlet<Double, Double>) streamlet;
@@ -100,8 +112,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testFlatMapStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testFlatMapStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
                                                .flatMap((num) -> Arrays.asList(num * 10));
     assertTrue(streamlet instanceof FlatMapStreamlet);
@@ -114,8 +126,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testFilterStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testFilterStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20).filter((num) -> num != 0);
     assertTrue(streamlet instanceof FilterStreamlet);
     FilterStreamlet<Double> mStreamlet = (FilterStreamlet<Double>) streamlet;
@@ -127,8 +139,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testRepartitionStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testRepartitionStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20).repartition(40);
     assertTrue(streamlet instanceof MapStreamlet);
     MapStreamlet<Double, Double> mStreamlet = (MapStreamlet<Double, Double>) streamlet;
@@ -142,7 +154,7 @@ public class StreamletImplTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testCloneStreamlet() {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     List<Streamlet<Double>> streamlets = baseStreamlet.setNumPartitions(20).clone(2);
     assertEquals(streamlets.size(), 2);
     assertTrue(streamlets.get(0) instanceof MapStreamlet);
@@ -155,9 +167,9 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testUnionStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet1 = StreamletImpl.createSupplierStreamlet(() -> Math.random());
-    Streamlet<Double> baseStreamlet2 = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testUnionStreamlet() {
+    Streamlet<Double> baseStreamlet1 = builder.newSource(() -> Math.random());
+    Streamlet<Double> baseStreamlet2 = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet1.union(baseStreamlet2);
     assertTrue(streamlet instanceof UnionStreamlet);
     SupplierStreamlet<Double> supplierStreamlet1 = (SupplierStreamlet<Double>) baseStreamlet1;
@@ -170,8 +182,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testTransformStreamlet() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testTransformStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet =
         baseStreamlet.transform(new SerializableTransformer<Double, Double>() {
           @Override
@@ -200,10 +212,25 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testCustomStreamletFromBolt() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testCustomStreamletFromBolt() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
                                                .applyOperator(new MyBoltOperator());
+    assertTrue(streamlet instanceof CustomStreamlet);
+    CustomStreamlet<Double, Double> mStreamlet = (CustomStreamlet<Double, Double>) streamlet;
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCustomStreamletWithGrouperFromBolt() throws Exception {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
+                                               .applyOperator(new MyBoltOperator(),
+                                                              new ShuffleStreamGrouping());
     assertTrue(streamlet instanceof CustomStreamlet);
     CustomStreamlet<Double, Double> mStreamlet = (CustomStreamlet<Double, Double>) streamlet;
     assertEquals(20, mStreamlet.getNumPartitions());
@@ -218,8 +245,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testCustomStreamletFromBasicBolt() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testCustomStreamletFromBasicBolt() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
                                                .applyOperator(new MyBasicBoltOperator());
     assertTrue(streamlet instanceof CustomStreamlet);
@@ -237,8 +264,8 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testCustomStreamletFromWindowBolt() throws Exception {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+  public void testCustomStreamletFromWindowBolt() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     Streamlet<Double> streamlet = baseStreamlet.setNumPartitions(20)
                                                .applyOperator(new MyWindowBoltOperator());
     assertTrue(streamlet instanceof CustomStreamlet);
@@ -253,15 +280,15 @@ public class StreamletImplTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testSimpleBuild() throws Exception {
-    Streamlet<String> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> "sa re ga ma");
+    Streamlet<String> baseStreamlet = builder.newSource(() -> "sa re ga ma");
     baseStreamlet.flatMap(x -> Arrays.asList(x.split(" ")))
                  .reduceByKeyAndWindow(x -> x, x -> 1, WindowConfig.TumblingCountWindow(10),
                      (x, y) -> x + y);
     SupplierStreamlet<String> supplierStreamlet = (SupplierStreamlet<String>) baseStreamlet;
     assertFalse(supplierStreamlet.isBuilt());
-    TopologyBuilder builder = new TopologyBuilder();
+    TopologyBuilder topologyBuilder = new TopologyBuilder();
     Set<String> stageNames = new HashSet<>();
-    supplierStreamlet.build(builder, stageNames);
+    supplierStreamlet.build(topologyBuilder, stageNames);
     assertTrue(supplierStreamlet.allBuilt());
     assertEquals(supplierStreamlet.getChildren().size(), 1);
     assertTrue(supplierStreamlet.getChildren().get(0) instanceof FlatMapStreamlet);
@@ -277,14 +304,14 @@ public class StreamletImplTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testComplexBuild() throws Exception {
+  public void testComplexBuild() {
     // First source
-    Streamlet<String> baseStreamlet1 = StreamletImpl.createSupplierStreamlet(() -> "sa re ga ma");
+    Streamlet<String> baseStreamlet1 = builder.newSource(() -> "sa re ga ma");
     Streamlet<String> leftStream =
         baseStreamlet1.flatMap(x -> Arrays.asList(x.split(" ")));
 
     // Second source
-    Streamlet<String> baseStreamlet2 = StreamletImpl.createSupplierStreamlet(() -> "I Love You");
+    Streamlet<String> baseStreamlet2 = builder.newSource(() -> "I Love You");
     Streamlet<String> rightStream =
         baseStreamlet2.flatMap(x -> Arrays.asList(x.split(" ")));
 
@@ -296,13 +323,13 @@ public class StreamletImplTest {
     SupplierStreamlet<String> supplierStreamlet2 = (SupplierStreamlet<String>) baseStreamlet2;
     assertFalse(supplierStreamlet1.isBuilt());
     assertFalse(supplierStreamlet2.isBuilt());
-    TopologyBuilder builder = new TopologyBuilder();
+    TopologyBuilder topologyBuilder = new TopologyBuilder();
     Set<String> stageNames = new HashSet<>();
-    supplierStreamlet1.build(builder, stageNames);
+    supplierStreamlet1.build(topologyBuilder, stageNames);
     assertTrue(supplierStreamlet1.isBuilt());
     assertFalse(supplierStreamlet1.allBuilt());
 
-    supplierStreamlet2.build(builder, stageNames);
+    supplierStreamlet2.build(topologyBuilder, stageNames);
     assertTrue(supplierStreamlet1.allBuilt());
     assertTrue(supplierStreamlet2.allBuilt());
 
@@ -332,7 +359,7 @@ public class StreamletImplTest {
   @SuppressWarnings("unchecked")
   public void testCalculatedDefaultStageNames() {
     // create SupplierStreamlet
-    Streamlet<String> baseStreamlet = StreamletImpl.createSupplierStreamlet(() ->
+    Streamlet<String> baseStreamlet = builder.newSource(() ->
         "This is test content");
     SupplierStreamlet<String> supplierStreamlet = (SupplierStreamlet<String>) baseStreamlet;
     assertEquals(supplierStreamlet.getChildren().size(), 0);
@@ -342,9 +369,9 @@ public class StreamletImplTest {
 
     // build SupplierStreamlet
     assertFalse(supplierStreamlet.isBuilt());
-    TopologyBuilder builder = new TopologyBuilder();
+    TopologyBuilder topologyBuilder = new TopologyBuilder();
     Set<String> stageNames = new HashSet<>();
-    supplierStreamlet.build(builder, stageNames);
+    supplierStreamlet.build(topologyBuilder, stageNames);
 
     // verify SupplierStreamlet
     assertTrue(supplierStreamlet.allBuilt());
@@ -387,7 +414,7 @@ public class StreamletImplTest {
   @Test
   public void testDefaultStreamletNameIfNotSet() {
     // create SupplierStreamlet
-    Streamlet<String> baseStreamlet = StreamletImpl.createSupplierStreamlet(() ->
+    Streamlet<String> baseStreamlet = builder.newSource(() ->
         "This is test content");
     SupplierStreamlet<String> supplierStreamlet = (SupplierStreamlet<String>) baseStreamlet;
     Set<String> stageNames = new HashSet<>();
@@ -405,7 +432,7 @@ public class StreamletImplTest {
   public void testStreamletNameIfAlreadySet() {
     String supplierName = "MyStringSupplier";
     // create SupplierStreamlet
-    Streamlet<String> baseStreamlet = StreamletImpl.createSupplierStreamlet(() ->
+    Streamlet<String> baseStreamlet = builder.newSource(() ->
         "This is test content");
     SupplierStreamlet<String> supplierStreamlet = (SupplierStreamlet<String>) baseStreamlet;
     supplierStreamlet.setName(supplierName);
@@ -423,7 +450,7 @@ public class StreamletImplTest {
   @Test(expected = RuntimeException.class)
   public void testStreamletNameIfDuplicateNameIsSet() {
     // create SupplierStreamlet
-    Streamlet<String> baseStreamlet = StreamletImpl.createSupplierStreamlet(() ->
+    Streamlet<String> baseStreamlet = builder.newSource(() ->
         "This is test content");
 
     SupplierStreamlet<String> supplierStreamlet = (SupplierStreamlet<String>) baseStreamlet;
@@ -435,14 +462,14 @@ public class StreamletImplTest {
 
     // build SupplierStreamlet
     assertFalse(supplierStreamlet.isBuilt());
-    TopologyBuilder builder = new TopologyBuilder();
+    TopologyBuilder topologyBuilder = new TopologyBuilder();
     Set<String> stageNames = new HashSet<>();
-    supplierStreamlet.build(builder, stageNames);
+    supplierStreamlet.build(topologyBuilder, stageNames);
   }
 
   @Test
   public void testSetNameWithInvalidValues() {
-    Streamlet<Double> streamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> streamlet = builder.newSource(() -> Math.random());
     Function<String, Streamlet<Double>> function = streamlet::setName;
     testByFunction(function, null);
     testByFunction(function, "");
@@ -451,14 +478,14 @@ public class StreamletImplTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSetNumPartitionsWithInvalidValue() {
-    Streamlet<Double> streamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> streamlet = builder.newSource(() -> Math.random());
     streamlet.setNumPartitions(0);
   }
 
   @Test(expected = IllegalArgumentException.class)
   @SuppressWarnings("unchecked")
   public void testCloneStreamletWithInvalidNumberOfClone() {
-    Streamlet<Double> baseStreamlet = StreamletImpl.createSupplierStreamlet(() -> Math.random());
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
     baseStreamlet.setNumPartitions(20).clone(0);
   }
 

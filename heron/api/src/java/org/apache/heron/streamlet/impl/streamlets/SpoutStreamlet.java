@@ -17,29 +17,31 @@
  * under the License.
  */
 
-package org.apache.heron.streamlet.impl.operators;
+package org.apache.heron.streamlet.impl.streamlets;
 
-import java.util.logging.Logger;
+import java.util.Set;
 
-import org.apache.heron.api.tuple.Tuple;
-import org.apache.heron.api.tuple.Values;
+import org.apache.heron.api.spout.IRichSpout;
+import org.apache.heron.api.topology.TopologyBuilder;
+import org.apache.heron.streamlet.impl.StreamletImpl;
 
 /**
- * UnionOperator is the class that implements the union functionality.
- * Its a very simple bolt that re-emits every tuple that it sees.
+ * SpoutStreamlet is a quick way of creating a Streamlet
+ * from an user supplied Spout object. The spout is the
+ * source of all tuples for this Streamlet.
  */
-public class UnionOperator<I> extends StreamletOperator<I, I> {
-  private static final Logger LOG = Logger.getLogger(UnionOperator.class.getName());
-  private static final long serialVersionUID = -7326832064961413315L;
+public class SpoutStreamlet<R> extends StreamletImpl<R> {
+  private IRichSpout spout;
 
-  public UnionOperator() {
+  public SpoutStreamlet(IRichSpout spout) {
+    this.spout = spout;
+    setNumPartitions(1);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public void execute(Tuple tuple) {
-    I obj = (I) tuple.getValue(0);
-    collector.emit(tuple, new Values(obj));
-    collector.ack(tuple);
+  public boolean doBuild(TopologyBuilder bldr, Set<String> stageNames) {
+    setDefaultNameIfNone(StreamletNamePrefix.SPOUT, stageNames);
+    bldr.setSpout(getName(), spout, getNumPartitions());
+    return true;
   }
 }

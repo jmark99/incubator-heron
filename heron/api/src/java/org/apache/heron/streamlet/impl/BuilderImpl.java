@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.heron.streamlet.impl;
 
 import java.util.HashSet;
@@ -24,12 +23,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.heron.api.spout.IRichSpout;
 import org.apache.heron.api.topology.TopologyBuilder;
 import org.apache.heron.streamlet.Builder;
 import org.apache.heron.streamlet.SerializableSupplier;
 import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.Streamlet;
-import org.apache.heron.streamlet.impl.utils.StreamletUtils;
+import org.apache.heron.streamlet.impl.streamlets.SourceStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.SpoutStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.SupplierStreamlet;
+
+import static org.apache.heron.streamlet.impl.utils.StreamletUtils.checkNotNull;
 
 /**
  * BuilderImpl implements the Builder interface.
@@ -45,18 +49,27 @@ public final class BuilderImpl implements Builder {
 
   @Override
   public <R> Streamlet<R> newSource(SerializableSupplier<R> supplier) {
-    StreamletUtils.require(supplier != null, "supplier must not be null.");
-    StreamletImpl<R> retval = StreamletImpl.createSupplierStreamlet(supplier);
-    retval.setNumPartitions(1);
+    checkNotNull(supplier, "supplier cannot not be null");
+
+    StreamletImpl<R> retval = new SupplierStreamlet<>(supplier);
     sources.add(retval);
     return retval;
   }
 
   @Override
   public <R> Streamlet<R> newSource(Source<R> generator) {
-    StreamletUtils.require(generator != null, "source must not be null.");
-    StreamletImpl<R> retval = StreamletImpl.createGeneratorStreamlet(generator);
-    retval.setNumPartitions(1);
+    checkNotNull(generator, "generator cannot not be null");
+
+    StreamletImpl<R> retval = new SourceStreamlet<>(generator);
+    sources.add(retval);
+    return retval;
+  }
+
+  @Override
+  public <R> Streamlet<R> newSource(IRichSpout spout) {
+    checkNotNull(spout, "spout cannot not be null");
+
+    StreamletImpl<R> retval = new SpoutStreamlet<>(spout);
     sources.add(retval);
     return retval;
   }
@@ -71,6 +84,8 @@ public final class BuilderImpl implements Builder {
   }
 
   public TopologyBuilder build(TopologyBuilder builder) {
+    checkNotNull(builder, "builder cannot not be null");
+
     Set<String> stageNames = new HashSet<>();
     for (StreamletImpl<?> streamlet : sources) {
       streamlet.build(builder, stageNames);

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.heron.streamlet.impl.sinks;
 
 import java.io.Serializable;
@@ -43,7 +42,6 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
   private static final Logger LOG = Logger.getLogger(ComplexSink.class.getName());
   private static final long serialVersionUID = 8717991188885786658L;
   private Sink<R> sink;
-  private OutputCollector collector;
   private State<Serializable, Serializable> state;
 
   public ComplexSink(Sink<R> sink) {

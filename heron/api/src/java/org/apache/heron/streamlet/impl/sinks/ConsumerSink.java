@@ -17,14 +17,10 @@
  * under the License.
  */
 
-
 package org.apache.heron.streamlet.impl.sinks;
 
-import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.heron.api.bolt.OutputCollector;
-import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Tuple;
 import org.apache.heron.streamlet.SerializableConsumer;
 import org.apache.heron.streamlet.impl.operators.StreamletOperator;
@@ -34,20 +30,14 @@ import org.apache.heron.streamlet.impl.operators.StreamletOperator;
  * consume function for every tuple.
  */
 public class ConsumerSink<R> extends StreamletOperator<R, R> {
+
   private static final long serialVersionUID = 8716140142187667638L;
   private static final Logger LOG = Logger.getLogger(ConsumerSink.class.getName());
   private SerializableConsumer<R> consumer;
-  private OutputCollector collector;
 
   public ConsumerSink(SerializableConsumer<R> consumer) {
     LOG.info(">>>> Using ConsumerSink()");
     this.consumer = consumer;
-  }
-
-  @SuppressWarnings("rawtypes")
-  @Override
-  public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-    this.collector = outputCollector;
   }
 
   @SuppressWarnings("unchecked")
