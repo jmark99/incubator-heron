@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
 package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
@@ -45,11 +43,10 @@ import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
  * to generate the next tuple.
  */
 public class ComplexSource<R> extends StreamletSource {
+
   private static final long serialVersionUID = -5086763670301450007L;
   private static final Logger LOG = Logger.getLogger(ComplexSource.class.getName());
   private Source<R> generator;
-
-  private SpoutOutputCollector collector;
   private State<Serializable, Serializable> state;
 
   private Map<String, Collection<R>> cache = new HashMap<>();
@@ -71,7 +68,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override
   public void open(Map<String, Object> map, TopologyContext topologyContext,
                    SpoutOutputCollector outputCollector) {
-    collector = outputCollector;
+    super.open(map, topologyContext, outputCollector);
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
     ackEnabled = isAckingEnabled(map, topologyContext);
@@ -84,15 +81,16 @@ public class ComplexSource<R> extends StreamletSource {
 
   @Override
   public void nextTuple() {
-    Collection<R> val = generator.get();
+    Collection<R> tuples = generator.get();
     if (!ackEnabled) {
       msgId = null;
     } else {
       msgId = getId();
-      cache.put(msgId, val);
+      cache.put(msgId, tuples);
     }
-    if (val != null) {
-      for (R tuple : val) {
+    if (tuples != null) {
+      //tuples.forEach(tuple -> collector.emit(new Values(tuple)));
+      for (R tuple : tuples) {
         collector.emit(new Values(tuple), msgId);
         LOG.info(">>>> COMPLEXSOURCE::nextTuple -> EMIT " + new Values(tuple, msgId));
       }

@@ -16,17 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
 package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
 import java.util.logging.Logger;
+import java.util.Map;
 
 import org.apache.heron.api.spout.BaseRichSpout;
+import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
 import org.apache.heron.api.topology.IStatefulComponent;
 import org.apache.heron.api.topology.OutputFieldsDeclarer;
+import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Fields;
 
 /**
@@ -40,17 +41,25 @@ public abstract class StreamletSource extends BaseRichSpout
   private static final Logger LOG = Logger.getLogger(StreamletSource.class.getName());
 
   static final String OUTPUT_FIELD_NAME = "output";
-  static final String MSGID_FIELD_NAME = "msgId";
 
   public StreamletSource() {
     LOG.info(">>>> StreamletSource Constructor called");
   }
+
+  protected SpoutOutputCollector collector;
 
   @Override
   public void initState(State<Serializable, Serializable> state) { }
 
   @Override
   public void preSave(String checkpointId) { }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public void open(Map<String, Object> map, TopologyContext topologyContext,
+                   SpoutOutputCollector outputCollector) {
+    collector = outputCollector;
+  }
 
   /**
    * The sources implementing streamlet functionality have some properties.
@@ -60,7 +69,7 @@ public abstract class StreamletSource extends BaseRichSpout
    */
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    String[] schema = {OUTPUT_FIELD_NAME /*, MSGID_FIELD_NAME*/};
+    String[] schema = {OUTPUT_FIELD_NAME};
     outputFieldsDeclarer.declare(new Fields(schema));
   }
 }

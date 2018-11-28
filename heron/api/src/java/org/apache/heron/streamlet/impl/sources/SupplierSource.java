@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
 package org.apache.heron.streamlet.impl.sources;
 
 import java.util.HashMap;
@@ -41,6 +39,7 @@ import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
  * to generate the next tuple.
  */
 public class SupplierSource<R> extends StreamletSource {
+
   private static final long serialVersionUID = 6476611751545430216L;
   private static final Logger LOG = Logger.getLogger(SupplierSource.class.getName());
 

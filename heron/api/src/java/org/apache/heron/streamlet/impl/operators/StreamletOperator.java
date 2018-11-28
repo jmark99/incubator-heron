@@ -39,7 +39,6 @@ public abstract class StreamletOperator<R, T>
     implements IStreamletRichOperator<R, T> {
   private static final long serialVersionUID = 8524238140745238942L;
   static final String OUTPUT_FIELD_NAME = "output";
-  static final String MSGID_FIELD_NAME = "msgId";
 
   private static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
 
@@ -64,10 +63,10 @@ public abstract class StreamletOperator<R, T>
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
     LOG.info(">>>> StreamletOperator:declareOutputFields");
-    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME /*, MSGID_FIELD_NAME*/));
+    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME));
   }
 
-  // for test dev purposes. Remove before release
+  // for test dev purposes only. Remove before release
   public boolean dropMessage(int rate) {
     if (rand.nextInt(100) < rate) {
       return true;
