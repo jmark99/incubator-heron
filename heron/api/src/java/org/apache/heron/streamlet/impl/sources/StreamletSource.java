@@ -19,8 +19,8 @@
 package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
-import java.util.logging.Logger;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.BaseRichSpout;
 import org.apache.heron.api.spout.SpoutOutputCollector;

@@ -19,9 +19,9 @@
 
 package org.apache.heron.streamlet.impl.operators;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
-import java.util.Map;
 
 import org.apache.heron.api.bolt.BaseRichBolt;
 import org.apache.heron.api.bolt.OutputCollector;
