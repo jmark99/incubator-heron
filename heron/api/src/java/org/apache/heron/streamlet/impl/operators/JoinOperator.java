@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.Pair;
 import org.apache.heron.api.tuple.Tuple;
@@ -42,6 +43,8 @@ import org.apache.heron.streamlet.Window;
  * This is needed for the semantics of outer/left/inner joins.
  */
 public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR> {
+  private static final Logger LOG = Logger.getLogger(JoinOperator.class.getName());
+
   private static final long serialVersionUID = 4875450390444745407L;
   private static final String LEFT_COMPONENT_NAME = "_streamlet_joinbolt_left_component_name_";
   private static final String RIGHT_COMPONENT_NAME = "_streamlet_joinbolt_right_component_name_";
@@ -60,12 +63,14 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
                       SerializableFunction<V1, K> leftKeyExtractor,
                       SerializableFunction<V2, K> rightKeyExtractor,
                       SerializableBiFunction<V1, V2, ? extends VR> joinFn) {
+    LOG.info(">>>> JoinOperator constructor");
     this.joinType = joinType;
     this.leftComponent = leftComponent;
     this.rightComponent = rightComponent;
     this.leftKeyExtractor = leftKeyExtractor;
     this.rightKeyExtractor = rightKeyExtractor;
     this.joinFn = joinFn;
+    LOG.info(">>>> joinType: " + this.joinType);
   }
 
   @Override
@@ -79,18 +84,24 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(TupleWindow inputWindow) {
+    LOG.info(">>>> joinOperationr::execute");
     Map<K, Pair<List<V1>, List<V2>>> joinMap = new HashMap<>();
     for (Tuple tuple : inputWindow.get()) {
+      LOG.info(">>>> tuple: " + tuple.toString());
       if (tuple.getSourceComponent().equals(leftComponent)) {
+        LOG.info(">>>> tuple.leftComponent");
         V1 tup = (V1) tuple.getValue(0);
+        LOG.info(">>>> tup: " + tup);
         if (tup != null) {
           addMapLeft(joinMap, tup);
         }
       } else {
+        LOG.info(">>>> tuple.rightComponent");
         V2 tup = (V2) tuple.getValue(0);
         if (tup != null) {
           addMapRight(joinMap, tup);
         }
+        LOG.info(">>>> tup: " + tup);
       }
     }
     evaluateJoinMap(joinMap, inputWindow);
@@ -101,11 +112,13 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
       Pair<List<V1>, List<V2>> val = joinMap.get(key);
       switch (joinType) {
         case INNER:
+          LOG.info(">>>> INNER");
           if (!val.getFirst().isEmpty() && !val.getSecond().isEmpty()) {
             innerJoinAndEmit(key, tupleWindow, val);
           }
           break;
         case OUTER_LEFT:
+          LOG.info(">>>> OUTER_LEFT");
           if (!val.getFirst().isEmpty() && !val.getSecond().isEmpty()) {
             innerJoinAndEmit(key, tupleWindow, val);
           } else if (!val.getFirst().isEmpty()) {
@@ -113,6 +126,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
           }
           break;
         case OUTER_RIGHT:
+          LOG.info(">>>> OUTER_RIGHT");
           if (!val.getFirst().isEmpty() && !val.getSecond().isEmpty()) {
             innerJoinAndEmit(key, tupleWindow, val);
           } else if (!val.getSecond().isEmpty()) {
@@ -120,6 +134,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
           }
           break;
         case OUTER:
+          LOG.info(">>>> OUTER");
           if (!val.getFirst().isEmpty() && !val.getSecond().isEmpty()) {
             innerJoinAndEmit(key, tupleWindow, val);
           } else if (!val.getSecond().isEmpty()) {
@@ -168,9 +183,14 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   }
 
   private void innerJoinAndEmit(K key, TupleWindow tupleWindow, Pair<List<V1>, List<V2>> val) {
+    LOG.info(">>>> innerJoinAndEmit...");
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
+    LOG.info(">>>> keyedWindow: " + keyedWindow.toString());
     for (V1 val1 : val.getFirst()) {
+      LOG.info(">>>>\tval1: " + val1.toString());
       for (V2 val2 : val.getSecond()) {
+        LOG.info(">>>>\tval2: " + val1.toString());
+        LOG.info(">>>>\ttupleWindow.get():  "+ tupleWindow.toString());
         collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
             joinFn.apply(val1, val2))));
       }
@@ -178,6 +198,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   }
 
   private void outerLeftJoinAndEmit(K key, TupleWindow tupleWindow, Pair<List<V1>, List<V2>> val) {
+    LOG.info(">>>> outerLeftJoinAndEmit...");
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
     for (V1 val1 : val.getFirst()) {
       collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
@@ -186,6 +207,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
   }
 
   private void outerRightJoinAndEmit(K key, TupleWindow tupleWindow, Pair<List<V1>, List<V2>> val) {
+    LOG.info(">>>> outerRightJoinAndEmit...");
     KeyedWindow<K> keyedWindow = getKeyedWindow(key, tupleWindow);
     for (V2 val2 : val.getSecond()) {
       collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,

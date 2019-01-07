@@ -20,6 +20,12 @@
 
 package org.apache.heron.examples.streamlet;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -67,26 +73,55 @@ public final class ComplexSourceAckingTopology {
 
     /**
      * The setup functions defines the instantiation logic for the source.
-     * Here, a Pulsar client and consumer are created that will listen on
-     * the Pulsar topic.
      */
     public void setup(Context context) {
     }
 
     /**
      * The get function defines how elements for the source streamlet are
-     * "gotten." In this case, the Pulsar consumer for the specified topic
-     * listens for incoming messages.
+     * gotten.
      */
     public Collection<Integer> get() {
       intList.clear();
-      intList.add(1);
-      intList.add(2);
-      intList.add(3);
-      StreamletUtils.sleep(500);
+      intList.add(rnd.nextInt(10) + 1);
+      intList.add(rnd.nextInt(10) + 1);
+      intList.add(rnd.nextInt(10) + 1);
+      StreamletUtils.sleep(1000);
       return intList;
     }
 
+    public void cleanup() {
+    }
+  }
+
+
+  private static class ComplexIntegerSink<T> implements Sink<T> {
+    private static final long serialVersionUID = -96514621878356324L;
+
+    ComplexIntegerSink() {
+    }
+
+    /**
+     * The setup function is called before the sink is used. Any complex
+     * instantiation logic for the sink should go here.
+     */
+    public void setup(Context context) {
+    }
+
+    /**
+     * The put function defines how each incoming streamlet element is
+     * actually processed. In this case, each incoming element is converted
+     * to a byte array and written to the temporary file (successful writes
+     * are also logged). Any exceptions are converted to RuntimeExceptions,
+     * which will effectively kill the topology.
+     */
+    public void put(T element) {
+      LOG.info(">>>> element: " + element);
+    }
+
+    /**
+     * Any cleanup logic for the sink can be applied here.
+     */
     public void cleanup() {
     }
   }
@@ -108,8 +143,8 @@ public final class ComplexSourceAckingTopology {
 
     builder.newSource(integerSource)
         .setName("integer-source")
-        .map(i -> i*2)
-        .log();
+        .map(i -> i*100)
+        .toSink(new ComplexIntegerSink<>());
 
     Config config = Config.newBuilder()
         .setNumContainers(NUM_CONTAINERS)

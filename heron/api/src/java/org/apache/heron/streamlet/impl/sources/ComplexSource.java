@@ -101,6 +101,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       final Collection<R> data = cache.remove(mid);
+      //LOG.info(">>>> COMPLEXSOURCE::ack  --------> ACKED [" +  mid + "]");
       LOG.info(">>>> COMPLEXSOURCE::ack  --------> ACKED [" + data + ", " + mid + "]");
     }
   }
@@ -108,8 +109,8 @@ public class ComplexSource<R> extends StreamletSource {
   @Override public void fail(Object mid) {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
-      LOG.info(">>>> COMPLEXSOURCE::fail --------> FAIL  [" + values + ", " + mid + "]");
       collector.emit(values, mid);
+      LOG.info(">>>> COMPLEXSOURCE::failed --------> RE-EMIT  [" + values + ", " + mid + "]");
     }
   }
 

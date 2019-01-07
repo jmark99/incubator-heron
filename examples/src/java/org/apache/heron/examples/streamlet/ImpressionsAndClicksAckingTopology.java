@@ -52,7 +52,7 @@ public final class ImpressionsAndClicksAckingTopology {
   // Heron resources to be applied to the topology
   private static final double CPU = 1.5;
   private static final int GIGABYTES_OF_RAM = 8;
-  private static final int NUM_CONTAINERS = 2;
+  private static final int NUM_CONTAINERS = 1;
 
   private ImpressionsAndClicksAckingTopology() {
   }
@@ -72,7 +72,7 @@ public final class ImpressionsAndClicksAckingTopology {
   /**
    * A list of 25 active users ("user1" through "user25").
    */
-  private static final List<String> USERS = IntStream.range(1, 25)
+  private static final List<String> USERS = IntStream.range(1, 10)
       .mapToObj(i -> String.format("user%d", i))
       .collect(Collectors.toList());
 
@@ -90,8 +90,8 @@ public final class ImpressionsAndClicksAckingTopology {
       this.adId = StreamletUtils.randomFromList(ADS);
       this.userId = StreamletUtils.randomFromList(USERS);
       this.impressionId = UUID.randomUUID().toString();
-      LOG.info(String.format("Emitting impression: %s", this));
-      StreamletUtils.sleep(100);
+      LOG.info(String.format("Instantiating impression: %s", this));
+      StreamletUtils.sleep(1000);
     }
 
     String getAdId() {
@@ -99,6 +99,7 @@ public final class ImpressionsAndClicksAckingTopology {
     }
 
     String getUserId() {
+      StreamletUtils.sleep(250);
       return userId;
     }
 
@@ -124,8 +125,8 @@ public final class ImpressionsAndClicksAckingTopology {
       this.adId = StreamletUtils.randomFromList(ADS);
       this.userId = StreamletUtils.randomFromList(USERS);
       this.clickId = UUID.randomUUID().toString();
-      LOG.info(String.format("Emitting click: %s", this));
-      StreamletUtils.sleep(100);
+      LOG.info(String.format("Instantiating click: %s", this));
+      StreamletUtils.sleep(1000);
     }
 
     String getAdId() {
@@ -133,6 +134,7 @@ public final class ImpressionsAndClicksAckingTopology {
     }
 
     String getUserId() {
+      StreamletUtils.sleep(250);
       return userId;
     }
 
@@ -190,23 +192,25 @@ public final class ImpressionsAndClicksAckingTopology {
             // if the ad IDs match between the elements (or a value of 0 if they don't).
             (user1, user2) -> (user1.getAdId().equals(user2.getAdId())) ? 1 : 0
         )
-        // The reduce function counts the number of ad clicks per user.
-        .reduceByKeyAndWindow(
-            // Key extractor for the reduce operation
-            kv -> String.format("user-%s", kv.getKey().getKey()),
-            // Value extractor for the reduce operation
-            kv -> kv.getValue(),
-            // Window configuration for the reduce operation
-            WindowConfig.TumblingCountWindow(50),
-            // A running cumulative total is calculated for each key
-            (cumulative, incoming) -> cumulative + incoming
-        )
-        // Finally, the consumer operation provides formatted log output
-        .consume(kw -> {
-          LOG.info(String.format("(user: %s, clicks: %d)",
-              kw.getKey().getKey(),
-              kw.getValue()));
-        });
+        .log();
+//        // The reduce function counts the number of ad clicks per user.
+//        .reduceByKeyAndWindow(
+//            // Key extractor for the reduce operation
+//            kv -> String.format("user-%s", kv.getKey().getKey()),
+//            // Value extractor for the reduce operation
+//            kv -> kv.getValue(),
+//            // Window configuration for the reduce operation
+//            WindowConfig.TumblingCountWindow(50),
+//            // A running cumulative total is calculated for each key
+//            (cumulative, incoming) -> cumulative + incoming
+//        )
+//        // Finally, the consumer operation provides formatted log output
+//        .consume(kw -> {
+//          LOG.info(String.format("(user: %s, clicks: %d), getkey: %s",
+//              kw.getKey().getKey(),
+//              kw.getValue(),
+//              kw.getKey()));
+//        });
 
     Config config = Config.newBuilder()
         .setNumContainers(NUM_CONTAINERS)

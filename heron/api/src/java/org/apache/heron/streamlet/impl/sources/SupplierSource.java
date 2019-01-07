@@ -82,6 +82,7 @@ public class SupplierSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
+      //R data = cache.get(mid);
       LOG.info(">>>> SUPPLIERSOURCE::ack --------> ACKED [" + data + ", " + mid + "]");
     }
   }
@@ -89,15 +90,15 @@ public class SupplierSource<R> extends StreamletSource {
   @Override public void fail(Object mid) {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
-      LOG.info(">>>> SUPPLIERSOURCE::fail -------> FAIL  [" + values + ", " + mid + "]");
       collector.emit(values, mid);
+      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values + ", " + mid + "]");
     }
   }
 
   private static AtomicLong idCounter = new AtomicLong();
 
   private String getId() {
-    return getUUID();
+    return "MID" + getUUID();
   }
 
   private String getUUID() {
