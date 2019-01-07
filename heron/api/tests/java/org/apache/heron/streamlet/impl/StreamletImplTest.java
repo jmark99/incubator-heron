@@ -44,19 +44,28 @@ import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.IStreamletBasicOperator;
 import org.apache.heron.streamlet.IStreamletRichOperator;
 import org.apache.heron.streamlet.IStreamletWindowOperator;
+import org.apache.heron.streamlet.KVStreamlet;
+import org.apache.heron.streamlet.KeyedWindow;
 import org.apache.heron.streamlet.SerializableConsumer;
 import org.apache.heron.streamlet.SerializablePredicate;
 import org.apache.heron.streamlet.SerializableTransformer;
 import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.Streamlet;
+import org.apache.heron.streamlet.StreamletReducers;
 import org.apache.heron.streamlet.WindowConfig;
 import org.apache.heron.streamlet.impl.streamlets.ConsumerStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.CountByKeyAndWindowStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.CountByKeyStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.CustomStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FilterStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.FlatMapStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.GeneralReduceByKeyStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.JoinStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.KVStreamletShadow;
+import org.apache.heron.streamlet.impl.streamlets.KeyByStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.MapStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.ReduceByKeyAndWindowStreamlet;
+import org.apache.heron.streamlet.impl.streamlets.ReduceByKeyStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SourceStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SpoutStreamlet;
 import org.apache.heron.streamlet.impl.streamlets.SupplierStreamlet;
@@ -350,6 +359,94 @@ public class StreamletImplTest {
     SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
     assertEquals(supplierStreamlet.getChildren().size(), 1);
     assertEquals(supplierStreamlet.getChildren().get(0), streamlet);
+  }
+
+  @Test
+  public void testKeyByStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    KVStreamlet<Long, Double> streamlet = baseStreamlet.keyBy(x -> Math.round(x));
+
+    assertTrue(streamlet instanceof KVStreamletShadow);
+    KVStreamletShadow<Long, Double> mStreamlet =
+        (KVStreamletShadow<Long, Double>) streamlet;
+    assertTrue(mStreamlet.getReal() instanceof KeyByStreamlet);
+    assertEquals(1, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), mStreamlet.getReal());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testReduceByKeyStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    KVStreamlet<String, Double> streamlet = baseStreamlet.setNumPartitions(20)
+        .<String, Double>reduceByKey(x -> (x > 0) ? "positive" : ((x < 0) ? "negative" : "zero"),
+            x -> x,
+            StreamletReducers::sum);
+
+    assertTrue(streamlet instanceof KVStreamletShadow);
+    KVStreamletShadow<String, Double> mStreamlet =
+        (KVStreamletShadow<String, Double>) streamlet;
+    assertTrue(mStreamlet.getReal() instanceof ReduceByKeyStreamlet);
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), mStreamlet.getReal());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGeneralReduceByKeyStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    KVStreamlet<String, Double> streamlet = baseStreamlet.setNumPartitions(20)
+        .reduceByKey(x -> (x > 0) ? "positive" : ((x < 0) ? "negative" : "zero"),
+            0.0,
+            StreamletReducers::sum);
+
+    assertTrue(streamlet instanceof KVStreamletShadow);
+    KVStreamletShadow<String, Double> mStreamlet =
+        (KVStreamletShadow<String, Double>) streamlet;
+    assertTrue(mStreamlet.getReal() instanceof GeneralReduceByKeyStreamlet);
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), mStreamlet.getReal());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCountByKeyStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    KVStreamlet<String, Long> streamlet = baseStreamlet.setNumPartitions(20)
+        .countByKey(x -> (x > 0) ? "positive" : ((x < 0) ? "negative" : "zero"));
+
+    assertTrue(streamlet instanceof KVStreamletShadow);
+    KVStreamletShadow<String, Long> mStreamlet =
+        (KVStreamletShadow<String, Long>) streamlet;
+    assertTrue(mStreamlet.getReal() instanceof CountByKeyStreamlet);
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), mStreamlet.getReal());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCountByKeyAndWindowStreamlet() {
+    Streamlet<Double> baseStreamlet = builder.newSource(() -> Math.random());
+    KVStreamlet<KeyedWindow<String>, Long> streamlet = baseStreamlet.setNumPartitions(20)
+        .countByKeyAndWindow(x -> (x > 0) ? "positive" : ((x < 0) ? "negative" : "zero"),
+                             WindowConfig.TumblingCountWindow(10));
+
+    assertTrue(streamlet instanceof KVStreamletShadow);
+    KVStreamletShadow<KeyedWindow<String>, Long> mStreamlet =
+        (KVStreamletShadow<KeyedWindow<String>, Long>) streamlet;
+    assertTrue(mStreamlet.getReal() instanceof CountByKeyAndWindowStreamlet);
+    assertEquals(20, mStreamlet.getNumPartitions());
+    SupplierStreamlet<Double> supplierStreamlet = (SupplierStreamlet<Double>) baseStreamlet;
+    assertEquals(supplierStreamlet.getChildren().size(), 1);
+    assertEquals(supplierStreamlet.getChildren().get(0), mStreamlet.getReal());
   }
 
   @Test

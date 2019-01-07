@@ -18,8 +18,6 @@
  */
 package org.apache.heron.streamlet.impl.streamlets;
 
-import java.util.ArrayList;
-
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -28,6 +26,7 @@ import org.apache.heron.streamlet.impl.StreamletImpl;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,17 +36,18 @@ import static org.mockito.Mockito.verify;
  */
 public class StreamletShadowTest {
   @Mock
-  private StreamletImpl<Double> mockReal;
+  private StreamletImpl<Double> mockReal = mock(StreamletImpl.class);
 
   @Mock
-  private StreamletImpl<Double> mockChild;
+  private StreamletImpl<Double> mockChild = mock(StreamletImpl.class);
 
   @Test
   public void testConstruction() {
     doReturn("real_name").when(mockReal).getName();
     doReturn(1).when(mockReal).getNumPartitions();
     doNothing().when(mockReal).addChild(mockChild);
-    doReturn(new ArrayList<StreamletImpl<Double>>()).when(mockReal).getChildren();
+    doReturn(mockReal).when(mockReal).setName("shadow_name");
+    doReturn(mockReal).when(mockReal).setNumPartitions(2);
     doReturn("real_stream").when(mockReal).getStreamId();
 
     StreamletShadow<Double> shadow = new StreamletShadow(mockReal);
@@ -56,13 +56,25 @@ public class StreamletShadowTest {
     assertEquals(shadow.getStreamId(), "real_stream");
 
     // set a different stream id
-    shadow.setStreamId("shadow_stream");
-    assertEquals(shadow.getStreamId(), "shadow_stream");
+    StreamletShadow<Double> shadow2 = new StreamletShadow(mockReal) {
+      @Override
+      public String getStreamId() {
+        return "shadow_stream";
+      }
+    };
+    assertEquals(shadow2.getName(), "real_name");
+    assertEquals(shadow2.getNumPartitions(), 1);
+    assertEquals(shadow2.getStreamId(), "shadow_stream");
+
+    // Set name/partition should be applied to the real object
+    shadow.setName("shadow_name").setNumPartitions(2);
+    verify(mockReal, times(1)).setName("shadow_name");
+    verify(mockReal, times(1)).setNumPartitions(2);
 
     // addChild call should be forwarded to the real object
     verify(mockReal, never()).addChild(mockChild);
     shadow.addChild(mockChild);
-    verify(mockReal, times(1)).addChild(mockChild);
+    shadow2.addChild(mockChild);
+    verify(mockReal, times(2)).addChild(mockChild);
   }
-
 }

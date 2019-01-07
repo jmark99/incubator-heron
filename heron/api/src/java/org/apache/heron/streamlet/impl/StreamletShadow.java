@@ -53,20 +53,13 @@ import org.apache.heron.streamlet.impl.StreamletImpl;
  */
 public class StreamletShadow<R> extends StreamletImpl<R> {
   private StreamletImpl<R> real;
-  // Extra properties for a Streamlet object
-  protected String streamId;
 
   public StreamletShadow(StreamletImpl<R> real) {
     this.real = real;
-    this.streamId = real.getStreamId();
   }
 
-  /**
-   * Sets the stream id of this Streamlet.
-   * @param streamId the stream id for this streamlet.
-   */
-  public void setStreamId(String streamId) {
-    this.streamId = streamId;
+  public StreamletImpl<R> getReal() {
+    return real;
   }
 
   /**
@@ -75,7 +68,7 @@ public class StreamletShadow<R> extends StreamletImpl<R> {
    */
   @Override
   public String getStreamId() {
-    return streamId;
+    return real.getStreamId();
   }
 
   /*
@@ -83,8 +76,20 @@ public class StreamletShadow<R> extends StreamletImpl<R> {
    * the real object since shadow object shouldn't have them)
    */
   @Override
+  public StreamletShadow<R> setName(String sName) {
+    real.setName(sName);
+    return this;
+  }
+
+  @Override
   public String getName() {
     return real.getName();
+  }
+
+  @Override
+  public StreamletShadow<R> setNumPartitions(int numPartitions) {
+    real.setNumPartitions(numPartitions);
+    return this;
   }
 
   @Override
