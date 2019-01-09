@@ -190,7 +190,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
       LOG.info(">>>>\tval1: " + val1.toString());
       for (V2 val2 : val.getSecond()) {
         LOG.info(">>>>\tval2: " + val1.toString());
-        LOG.info(">>>>\ttupleWindow.get():  "+ tupleWindow.toString());
+        LOG.info(">>>>\ttupleWindow.get():  " + tupleWindow.toString());
         collector.emit(tupleWindow.get(), new Values(new KeyValue<>(keyedWindow,
             joinFn.apply(val1, val2))));
       }
