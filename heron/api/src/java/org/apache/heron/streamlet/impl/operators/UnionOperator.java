@@ -33,6 +33,7 @@ public class UnionOperator<I> extends StreamletOperator<I, I> {
   private static final long serialVersionUID = -7326832064961413315L;
 
   public UnionOperator() {
+    LOG.info(">>> using UnionOperator");
   }
 
   @SuppressWarnings("unchecked")

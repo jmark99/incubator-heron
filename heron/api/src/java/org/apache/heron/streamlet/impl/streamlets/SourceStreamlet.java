@@ -34,6 +34,7 @@ public class SourceStreamlet<R> extends StreamletImpl<R> {
   private Source<R> generator;
 
   public SourceStreamlet(Source<R> generator) {
+    LOG.info(">>> using SourceStreamlet");
     this.generator = generator;
     setNumPartitions(1);
   }

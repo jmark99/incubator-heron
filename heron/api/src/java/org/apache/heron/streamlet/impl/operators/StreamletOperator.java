@@ -40,7 +40,7 @@ public abstract class StreamletOperator<R, T>
   private static final long serialVersionUID = 8524238140745238942L;
   static final String OUTPUT_FIELD_NAME = "output";
 
-  private static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
+  public static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
 
   private Random rand = new Random(System.currentTimeMillis());
 

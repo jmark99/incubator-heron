@@ -37,6 +37,7 @@ public class SplitOperator<R> extends StreamletOperator<R, R> {
   private Map<String, SerializablePredicate<R>> splitFns;
 
   public SplitOperator(Map<String, SerializablePredicate<R>> splitFns) {
+    LOG.info(">>> using SplitOperator");
     this.splitFns = splitFns;
   }
 

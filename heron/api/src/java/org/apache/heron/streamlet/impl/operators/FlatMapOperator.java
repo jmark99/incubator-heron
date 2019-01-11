@@ -35,6 +35,7 @@ public class FlatMapOperator<R, T> extends StreamletOperator<R, T> {
 
   public FlatMapOperator(
       SerializableFunction<? super R, ? extends Iterable<? extends T>> flatMapFn) {
+    LOG.info(">>> using FlatMapOperator");
     this.flatMapFn = flatMapFn;
   }
 

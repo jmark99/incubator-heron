@@ -34,7 +34,7 @@ public class LogSink<R> extends StreamletOperator<R, R> {
   private static final Logger LOG = Logger.getLogger(LogSink.class.getName());
 
   public LogSink() {
-    LOG.info(">>>> Using LogSink()");
+    LOG.info(">>>> using LogSink()");
   }
 
   @SuppressWarnings("unchecked")
@@ -43,7 +43,7 @@ public class LogSink<R> extends StreamletOperator<R, R> {
     LOG.info(">>> LogSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(0)) {
+    if (dropMessage(10)) {
       LOG.info(">>> LogSink dropped msg: " + obj);
       return;
     }

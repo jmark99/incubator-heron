@@ -36,6 +36,7 @@ public class KeyByOperator<R, K, V> extends StreamletOperator<R, KeyValue<K, V>>
 
   public KeyByOperator(SerializableFunction<R, K> keyExtractor,
                        SerializableFunction<R, V> valueExtractor) {
+    LOG.info(">>> using KeyByOperator");
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;
   }
@@ -47,7 +48,7 @@ public class KeyByOperator<R, K, V> extends StreamletOperator<R, KeyValue<K, V>>
     K key = keyExtractor.apply(obj);
     V value = valueExtractor.apply(obj);
 
-    collector.emit(new Values(new KeyValue<>(key, value)));
+    collector.emit(tuple, new Values(new KeyValue<>(key, value)));
     collector.ack(tuple);
   }
 }

@@ -48,6 +48,7 @@ public class TransformOperator<R, T> extends StreamletOperator<R, T>
 
   public TransformOperator(
       SerializableTransformer<? super R, ? extends T> serializableTransformer) {
+    LOG.info(">>> using TransformOperator");
     this.serializableTransformer = serializableTransformer;
   }
 

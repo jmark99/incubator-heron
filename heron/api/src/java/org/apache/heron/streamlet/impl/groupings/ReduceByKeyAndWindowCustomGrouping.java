@@ -42,6 +42,7 @@ public class ReduceByKeyAndWindowCustomGrouping<R, K> implements CustomStreamGro
   private List<Integer> taskIds;
 
   public ReduceByKeyAndWindowCustomGrouping(SerializableFunction<R, K> keyExtractor) {
+    LOG.info(">>> using ReduceByKeyAndWindowCustomGrouping");
     this.keyExtractor = keyExtractor;
   }
 

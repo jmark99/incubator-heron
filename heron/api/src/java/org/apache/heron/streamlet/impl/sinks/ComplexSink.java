@@ -45,7 +45,7 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
   private State<Serializable, Serializable> state;
 
   public ComplexSink(Sink<R> sink) {
-    LOG.info(">>>> Using ComplexSink()");
+    LOG.info(">>> using ComplexSink");
     this.sink = sink;
   }
 
@@ -73,7 +73,7 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
     LOG.info(">>> ComplexSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(0)) {
+    if (dropMessage(10)) {
       LOG.info(">>> ComplexSink dropped msg: " + obj);
       return;
     }

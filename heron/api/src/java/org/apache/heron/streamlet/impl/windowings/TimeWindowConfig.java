@@ -32,8 +32,11 @@ public final class TimeWindowConfig implements WindowConfig {
   private Duration slidingIntervalDuration;
 
   public TimeWindowConfig(Duration windowDuration, Duration slidingIntervalDuration) {
+    LOG.info(">>> using TimeWindowConfig");
     this.windowDuration = windowDuration;
     this.slidingIntervalDuration = slidingIntervalDuration;
+    LOG.info(">>> windowDuration: " + this.windowDuration);
+    LOG.info(">>> slidingINtervalDuration: " + this.slidingIntervalDuration);
   }
 
   /**

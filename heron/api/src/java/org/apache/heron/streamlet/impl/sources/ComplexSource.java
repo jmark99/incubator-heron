@@ -49,12 +49,13 @@ public class ComplexSource<R> extends StreamletSource {
   private Source<R> generator;
   private State<Serializable, Serializable> state;
 
-  private Map<String, Collection<R>> cache = new HashMap<>();
+  //o private Map<String, Collection<R>> cache = new HashMap<>();
+  private Map<String, R> cache = new HashMap<>();
   private boolean ackEnabled = false;
   private String msgId = null;
 
   public ComplexSource(Source<R> generator) {
-    LOG.info(">>>> Using ComplexSource...");
+    LOG.info(">>>> using ComplexSource...");
     this.generator = generator;
     msgId = getId();
   }
@@ -82,26 +83,23 @@ public class ComplexSource<R> extends StreamletSource {
   @Override
   public void nextTuple() {
     Collection<R> tuples = generator.get();
-    if (!ackEnabled) {
-      msgId = null;
-    } else {
-      msgId = getId();
-      cache.put(msgId, tuples);
-    }
+    LOG.info(">>> tuples: " + tuples.toString());
+    msgId = null;
     if (tuples != null) {
-      //tuples.forEach(tuple -> collector.emit(new Values(tuple)));
       for (R tuple : tuples) {
+        if (ackEnabled) {
+          msgId = getId();
+          cache.put(msgId, tuple);
+        }
         collector.emit(new Values(tuple), msgId);
         LOG.info(">>>> COMPLEXSOURCE::nextTuple -> EMIT " + new Values(tuple, msgId));
       }
     }
   }
 
-
   @Override public void ack(Object mid) {
     if (ackEnabled) {
-      final Collection<R> data = cache.remove(mid);
-      //LOG.info(">>>> COMPLEXSOURCE::ack  --------> ACKED [" +  mid + "]");
+      R data = cache.remove(mid);
       LOG.info(">>>> COMPLEXSOURCE::ack  --------> ACKED [" + data + ", " + mid + "]");
     }
   }
@@ -110,11 +108,10 @@ public class ComplexSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> COMPLEXSOURCE::failed --------> RE-EMIT  [" + values + ", " + mid + "]");
+      LOG.info(">>>> COMPLEXSOURCE::failed --------> RE-EMIT  [" + values.get(0) + ", " + mid +
+          "]");
     }
   }
-
-  private static AtomicLong idCounter = new AtomicLong();
 
   private String getId() {
     return getUUID();

@@ -30,6 +30,7 @@ public final class CountWindowConfig implements WindowConfig {
   private int slideInterval;
 
   public CountWindowConfig(int windowSize, int slideInterval) {
+    LOG.info(">>> using CountWindowConfig");
     this.windowSize = windowSize;
     this.slideInterval = slideInterval;
   }

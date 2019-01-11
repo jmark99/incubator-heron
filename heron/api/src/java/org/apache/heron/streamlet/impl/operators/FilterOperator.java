@@ -38,6 +38,7 @@ public class FilterOperator<R> extends StreamletOperator<R, R> {
   private SerializablePredicate<? super R> filterFn;
 
   public FilterOperator(SerializablePredicate<? super R> filterFn) {
+    LOG.info(">>> using FilterOperator");
     this.filterFn = filterFn;
   }
 

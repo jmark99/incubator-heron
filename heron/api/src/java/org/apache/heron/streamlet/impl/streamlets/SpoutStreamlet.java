@@ -34,6 +34,7 @@ public class SpoutStreamlet<R> extends StreamletImpl<R> {
   private IRichSpout spout;
 
   public SpoutStreamlet(IRichSpout spout) {
+    LOG.info(">>> using SpoutStreamlet");
     this.spout = spout;
     setNumPartitions(1);
   }

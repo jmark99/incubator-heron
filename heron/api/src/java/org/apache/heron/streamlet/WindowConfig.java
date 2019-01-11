@@ -22,6 +22,7 @@ package org.apache.heron.streamlet;
 
 
 import java.time.Duration;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.BaseWindowedBolt;
 import org.apache.heron.api.tuple.Tuple;
@@ -37,6 +38,9 @@ import org.apache.heron.streamlet.impl.windowings.TimeWindowConfig;
  * sliding/tumbling windows.
  */
 public interface WindowConfig {
+
+  final Logger LOG =
+      Logger.getLogger(WindowConfig.class.getName());
 
   /**
    * Apply this WindowConfig object to a bolt object

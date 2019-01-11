@@ -51,7 +51,7 @@ public class SupplierSource<R> extends StreamletSource {
   private String msgId = null;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
-    LOG.info(">>>> Using SupplierSource...");
+    LOG.info(">>> using SupplierSource...");
     this.supplier = supplier;
     msgId = getId();
   }
@@ -91,14 +91,15 @@ public class SupplierSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values + ", " + mid + "]");
+      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values.get(0) + ", " + mid +
+          "]");
     }
   }
 
   private static AtomicLong idCounter = new AtomicLong();
 
   private String getId() {
-    return "MID" + getUUID();
+    return "id-" + getUUID();
   }
 
   private String getUUID() {

@@ -39,6 +39,7 @@ public class TransformStreamlet<R, T> extends StreamletImpl<T> {
 
   public TransformStreamlet(StreamletImpl<R> parent,
                        SerializableTransformer<? super R, ? extends T> serializableTransformer) {
+    LOG.info(">>> using TransformStreamlet");
     this.parent = parent;
     this.serializableTransformer = serializableTransformer;
     setNumPartitions(parent.getNumPartitions());

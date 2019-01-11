@@ -63,7 +63,7 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
                       SerializableFunction<V1, K> leftKeyExtractor,
                       SerializableFunction<V2, K> rightKeyExtractor,
                       SerializableBiFunction<V1, V2, ? extends VR> joinFn) {
-    LOG.info(">>>> JoinOperator constructor");
+    LOG.info(">>> using JoinOperator");
     this.joinType = joinType;
     this.leftComponent = leftComponent;
     this.rightComponent = rightComponent;

@@ -37,6 +37,7 @@ public class SinkStreamlet<R> extends StreamletImpl<R> {
   private Sink<R> sink;
 
   public SinkStreamlet(StreamletImpl<R> parent, Sink<R> sink) {
+    LOG.info(">>> using SinkStreamlet");
     this.parent = parent;
     this.sink = sink;
     setNumPartitions(parent.getNumPartitions());

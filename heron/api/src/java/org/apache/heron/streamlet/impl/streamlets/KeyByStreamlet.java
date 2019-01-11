@@ -40,6 +40,7 @@ public class KeyByStreamlet<R, K, V> extends StreamletImpl<KeyValue<K, V>> {
   public KeyByStreamlet(StreamletImpl<R> parent,
                         SerializableFunction<R, K> keyExtractor,
                         SerializableFunction<R, V> valueExtractor) {
+    LOG.info(">>> using KeyByStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;

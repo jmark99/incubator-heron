@@ -39,7 +39,7 @@ public class SplitStreamlet<R> extends StreamletImpl<R> {
 
   public SplitStreamlet(StreamletImpl<R> parent,
                         Map<String, SerializablePredicate<R>> splitFns) {
-
+    LOG.info(">>> using SplitStreamlet");
     this.parent = parent;
     this.splitFns = splitFns;
     setNumPartitions(parent.getNumPartitions());

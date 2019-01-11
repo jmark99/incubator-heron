@@ -36,6 +36,7 @@ public class FilterStreamlet<R> extends StreamletImpl<R> {
   private SerializablePredicate<? super R> filterFn;
 
   public FilterStreamlet(StreamletImpl<R> parent, SerializablePredicate<? super R> filterFn) {
+    LOG.info(">>> using FilterStreamlet");
     this.parent = parent;
     this.filterFn = filterFn;
     setNumPartitions(parent.getNumPartitions());

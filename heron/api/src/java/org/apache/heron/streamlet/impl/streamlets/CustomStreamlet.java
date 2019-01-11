@@ -48,6 +48,7 @@ public class CustomStreamlet<R, T> extends StreamletImpl<T> {
   public CustomStreamlet(StreamletImpl<R> parent,
                          IStreamletOperator<R, T> operator,
                          StreamGrouping grouper) {
+    LOG.info(">>> using CustomStreamlet");
     this.parent = parent;
     this.operator = operator;
     this.grouper = grouper;

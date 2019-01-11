@@ -43,6 +43,7 @@ public class CountByKeyStreamlet<R, K> extends StreamletImpl<KeyValue<K, Long>> 
   private SerializableFunction<R, K> keyExtractor;
 
   public CountByKeyStreamlet(StreamletImpl<R> parent, SerializableFunction<R, K> keyExtractor) {
+    LOG.info(">>> using CountByKeyStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     setNumPartitions(parent.getNumPartitions());

@@ -36,7 +36,7 @@ public class ConsumerSink<R> extends StreamletOperator<R, R> {
   private SerializableConsumer<R> consumer;
 
   public ConsumerSink(SerializableConsumer<R> consumer) {
-    LOG.info(">>>> Using ConsumerSink()");
+    LOG.info(">>>> using ConsumerSink");
     this.consumer = consumer;
   }
 
@@ -46,7 +46,7 @@ public class ConsumerSink<R> extends StreamletOperator<R, R> {
     LOG.info(">>> ConsumerSink:execute processing tuple: " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(0)) {
+    if (dropMessage(10)) {
       LOG.info(">>> ConsumerSink dropped msg: " + obj);
       return;
     }

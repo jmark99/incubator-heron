@@ -90,7 +90,7 @@ import static org.apache.heron.streamlet.impl.utils.StreamletUtils.require;
  * Streamlet before doing the transformation.
  */
 public abstract class StreamletImpl<R> implements Streamlet<R> {
-  private static final Logger LOG = Logger.getLogger(StreamletImpl.class.getName());
+  public static final Logger LOG = Logger.getLogger(StreamletImpl.class.getName());
   protected String name;
   protected int nPartitions;
   private List<StreamletImpl<?>> children;

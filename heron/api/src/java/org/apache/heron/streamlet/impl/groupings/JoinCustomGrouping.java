@@ -39,6 +39,7 @@ public class JoinCustomGrouping<R, K> implements CustomStreamGrouping {
   private List<Integer> taskIds;
 
   public JoinCustomGrouping(SerializableFunction<R, K> keyExtractor) {
+    LOG.info(">>> using JoinCustomGrouping");
     this.keyExtractor = keyExtractor;
   }
 

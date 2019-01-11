@@ -48,6 +48,7 @@ public class ReduceByKeyAndWindowOperator<R, K, T>
   public ReduceByKeyAndWindowOperator(SerializableFunction<R, K> keyExtractor,
                                       SerializableFunction<R, T> valueExtractor,
                                       SerializableBinaryOperator<T> reduceFn) {
+    LOG.info(">>> using ReduceByKeyAndWindowOperator");
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;
     this.reduceFn = reduceFn;

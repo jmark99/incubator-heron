@@ -37,6 +37,7 @@ public class ConsumerStreamlet<R> extends StreamletImpl<R> {
   private SerializableConsumer<R> consumer;
 
   public ConsumerStreamlet(StreamletImpl<R> parent, SerializableConsumer<R> consumer) {
+    LOG.info(">>> using ConsumerStreamlet");
     this.parent = parent;
     this.consumer = consumer;
     setNumPartitions(parent.getNumPartitions());

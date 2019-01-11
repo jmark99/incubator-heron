@@ -36,6 +36,7 @@ public class MapOperator<R, T> extends StreamletOperator<R, T> {
   private SerializableFunction<? super R, ? extends T> mapFn;
 
   public MapOperator(SerializableFunction<? super R, ? extends T> mapFn) {
+    LOG.info(">>> using MapOperator");
     this.mapFn = mapFn;
   }
 

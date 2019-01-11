@@ -20,6 +20,7 @@
 package org.apache.heron.api.grouping;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.google.protobuf.ByteString;
 
@@ -31,6 +32,8 @@ import org.apache.heron.api.utils.Utils;
  * This is the interface for user defined stream grouping strategies.
  */
 public interface CustomStreamGrouping extends StreamGrouping {
+
+  Logger LOG = Logger.getLogger(CustomStreamGrouping.class.getName());
 
   /**
    * Tells the stream grouping at runtime the tasks in the target bolt.

@@ -48,6 +48,7 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
   public GeneralReduceByKeyAndWindowOperator(SerializableFunction<R, K> keyExtractor,
                                              T identity,
                                              SerializableBiFunction<T, R, ? extends T> reduceFn) {
+    LOG.info(">>> using GeneralReduceByKeyAndWindowOperator");
     this.keyExtractor = keyExtractor;
     this.identity = identity;
     this.reduceFn = reduceFn;

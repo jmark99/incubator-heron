@@ -46,6 +46,7 @@ public class ReduceByKeyOperator<R, K, T> extends StreamletOperator<R, KeyValue<
   public ReduceByKeyOperator(SerializableFunction<R, K> keyExtractor,
                              SerializableFunction<R, T> valueExtractor,
                              SerializableBinaryOperator<T> reduceFn) {
+    LOG.info(">>> using ReduceByKeyOperator");
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;
     this.reduceFn = reduceFn;
@@ -67,7 +68,7 @@ public class ReduceByKeyOperator<R, K, T> extends StreamletOperator<R, KeyValue<
     }
 
     reduceMap.put(key, newValue);
-    collector.emit(new Values(new KeyValue<K, T>(key, newValue)));
+    collector.emit(tuple, new Values(new KeyValue<K, T>(key, newValue)));
     collector.ack(tuple);
   }
 }

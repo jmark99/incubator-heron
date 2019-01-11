@@ -35,6 +35,7 @@ public class UnionStreamlet<I> extends StreamletImpl<I> {
   private StreamletImpl<? extends I> right;
 
   public UnionStreamlet(StreamletImpl<I> left, StreamletImpl<? extends I> right) {
+    LOG.info(">>> using UnionStreamlet");
     this.left = left;
     this.right = right;
     setNumPartitions(left.getNumPartitions());

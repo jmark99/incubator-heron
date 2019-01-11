@@ -46,6 +46,7 @@ public class GeneralReduceByKeyStreamlet<R, K, T> extends StreamletImpl<KeyValue
                                      SerializableFunction<R, K> keyExtractor,
                                      T identity,
                                      SerializableBiFunction<T, R, ? extends T> reduceFn) {
+    LOG.info(">>> using GeneralReduceByKeyStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.identity = identity;

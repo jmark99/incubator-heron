@@ -103,7 +103,7 @@ public final class StreamletUtils {
     Simulator simulator = new Simulator();
     simulator.submitTopology("test", config.getHeronConfig(), builder.build().createTopology());
     simulator.activate("test");
-    StreamletUtils.sleep((4*60 + 30) * 1000);
+    StreamletUtils.sleep((5*60 + 30) * 1000);
     simulator.deactivate("test");
     simulator.killTopology("test");
   }

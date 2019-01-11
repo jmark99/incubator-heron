@@ -39,6 +39,7 @@ public class FlatMapStreamlet<R, T> extends StreamletImpl<T> {
   public FlatMapStreamlet(StreamletImpl<R> parent,
                           SerializableFunction<? super R,
                                                ? extends Iterable<? extends T>> flatMapFn) {
+    LOG.info(">>> using FlatMapStreamlet");
     this.parent = parent;
     this.flatMapFn = flatMapFn;
     setNumPartitions(parent.getNumPartitions());
