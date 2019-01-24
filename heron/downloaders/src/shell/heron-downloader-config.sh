@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -14,16 +15,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-''' __init__ '''
-from browsehandler import BrowseHandler
-from downloadhandler import DownloadHandler
-from filedatahandler import FileDataHandler
-from filehandler import FileHandler
-from filestatshandler import FileStatsHandler
-from jmaphandler import JmapHandler
-from jstackhandler import JstackHandler
-from memoryhistogramhandler import MemoryHistogramHandler
-from pmaphandler import PmapHandler
-from pidhandler import PidHandler
-from killexecutorhandler import KillExecutorHandler
-from healthhandler import HealthHandler
+
+if [ $1 = "kubernetes" ]; then
+   ln -s /usr/local/heron/conf/kubernetes /heron
+   mv /heron/kubernetes /heron/heron-conf
+fi

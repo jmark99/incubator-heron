@@ -69,7 +69,7 @@ public class RoundRobinPackingTest {
   }
 
   @Test(expected = PackingException.class)
-  public void testCheckFailure() throws Exception {
+  public void testCheckInsufficientRamFailure() throws Exception {
     int numContainers = 2;
     int spoutParallelism = 4;
     int boltParallelism = 3;
@@ -82,6 +82,25 @@ public class RoundRobinPackingTest {
     ByteAmount containerRam = ByteAmount.fromGigabytes(0);
 
     topologyConfig.setContainerRamRequested(containerRam);
+
+    TopologyAPI.Topology topology =  getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    getRoundRobinPackingPlan(topology);
+  }
+
+  @Test(expected = PackingException.class)
+  public void testCheckInsufficientCpuFailure() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set insufficient CPU for container
+    double containerCpu = 1.0;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
 
     TopologyAPI.Topology topology =  getTopology(spoutParallelism, boltParallelism, topologyConfig);
     getRoundRobinPackingPlan(topology);
@@ -160,6 +179,10 @@ public class RoundRobinPackingTest {
       Assert.assertEquals(containerRam
           .minus(RoundRobinPacking.DEFAULT_RAM_PADDING_PER_CONTAINER).divide(instancesCount),
           resources.iterator().next().getRam());
+
+      Assert.assertEquals(
+          (containerCpu - RoundRobinPacking.DEFAULT_CPU_PADDING_PER_CONTAINER) / instancesCount,
+          resources.iterator().next().getCpu(), DELTA);
     }
   }
 
@@ -216,11 +239,15 @@ public class RoundRobinPackingTest {
       Assert.assertEquals(containerRam
               .minus(containerRamPadding).divide(instancesCount),
           resources.iterator().next().getRam());
+
+      Assert.assertEquals(
+          (containerCpu - RoundRobinPacking.DEFAULT_CPU_PADDING_PER_CONTAINER) / instancesCount,
+          resources.iterator().next().getCpu(), DELTA);
     }
   }
 
   /**
-   * Test the scenario RAM map config is partially set
+   * Test the scenario RAM map config is completely set
    */
   @Test
   public void testCompleteRamMapRequested() throws Exception {
@@ -256,6 +283,135 @@ public class RoundRobinPackingTest {
   }
 
   /**
+   * Test the scenario CPU map config is completely set and there are exactly enough resource
+   */
+  @Test
+  public void testCompleteCpuMapRequestedWithExactlyEnoughResource() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+    Integer totalInstances = spoutParallelism + boltParallelism;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set resources for container
+    double containerCpu = 17;
+
+    // Explicit set component CPU map
+    double boltCpu = 4;
+    double spoutCpu = 4;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
+    topologyConfig.setComponentCpu(BOLT_NAME, boltCpu);
+    topologyConfig.setComponentCpu(SPOUT_NAME, spoutCpu);
+
+    TopologyAPI.Topology topologyExplicitCpuMap =
+        getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    PackingPlan packingPlanExplicitCpuMap =
+        getRoundRobinPackingPlan(topologyExplicitCpuMap);
+
+    AssertPacking.assertContainers(packingPlanExplicitCpuMap.getContainers(),
+        BOLT_NAME, SPOUT_NAME, boltCpu, spoutCpu, null);
+    Assert.assertEquals(totalInstances, packingPlanExplicitCpuMap.getInstanceCount());
+  }
+
+  /**
+   * Test the scenario CPU map config is completely set and there are more than enough resource
+   */
+  @Test
+  public void testCompleteCpuMapRequestedWithMoreThanEnoughResource() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+    Integer totalInstances = spoutParallelism + boltParallelism;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set resources for container
+    double containerCpu = 30;
+
+    // Explicit set component CPU map
+    double boltCpu = 4;
+    double spoutCpu = 4;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
+    topologyConfig.setComponentCpu(BOLT_NAME, boltCpu);
+    topologyConfig.setComponentCpu(SPOUT_NAME, spoutCpu);
+
+    TopologyAPI.Topology topologyExplicitCpuMap =
+        getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    PackingPlan packingPlanExplicitCpuMap =
+        getRoundRobinPackingPlan(topologyExplicitCpuMap);
+
+    AssertPacking.assertContainers(packingPlanExplicitCpuMap.getContainers(),
+        BOLT_NAME, SPOUT_NAME, boltCpu, spoutCpu, null);
+    Assert.assertEquals(totalInstances, packingPlanExplicitCpuMap.getInstanceCount());
+  }
+
+  /**
+   * Test the scenario CPU map config is completely set and there are less than enough resource
+   */
+  @Test(expected = PackingException.class)
+  public void testCompleteCpuMapRequestedWithLessThanEnoughResource() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set resources for container
+    double containerCpu = 10;
+
+    // Explicit set component CPU map
+    double boltCpu = 4;
+    double spoutCpu = 4;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
+    topologyConfig.setComponentCpu(BOLT_NAME, boltCpu);
+    topologyConfig.setComponentCpu(SPOUT_NAME, spoutCpu);
+
+    TopologyAPI.Topology topologyExplicitCpuMap =
+        getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    getRoundRobinPackingPlan(topologyExplicitCpuMap);
+  }
+
+  /**
+   * Test the scenario CPU map config is completely set
+   * and there are exactly enough resource for instances, but not enough for padding
+   */
+  @Test(expected = PackingException.class)
+  public void testCompleteCpuMapRequestedWithoutPaddingResource() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set resources for container
+    double containerCpu = 16;
+
+    // Explicit set component CPU map
+    double boltCpu = 4;
+    double spoutCpu = 4;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
+    topologyConfig.setComponentCpu(BOLT_NAME, boltCpu);
+    topologyConfig.setComponentCpu(SPOUT_NAME, spoutCpu);
+
+    TopologyAPI.Topology topologyExplicitCpuMap =
+        getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    getRoundRobinPackingPlan(topologyExplicitCpuMap);
+  }
+
+  /**
    * Test the scenario RAM map config is partially set
    */
   @Test
@@ -285,8 +441,7 @@ public class RoundRobinPackingTest {
     Assert.assertEquals(totalInstances, packingPlanExplicitRamMap.getInstanceCount());
 
     // RAM for bolt should be the value in component RAM map
-    for (PackingPlan.ContainerPlan containerPlan
-        : packingPlanExplicitRamMap.getContainers()) {
+    for (PackingPlan.ContainerPlan containerPlan : packingPlanExplicitRamMap.getContainers()) {
       Assert.assertEquals(containerRam, containerPlan.getRequiredResource().getRam());
       int boltCount = 0;
       int instancesCount = containerPlan.getInstances().size();
@@ -308,6 +463,63 @@ public class RoundRobinPackingTest {
                   .minus(RoundRobinPacking.DEFAULT_RAM_PADDING_PER_CONTAINER)
                   .divide(spoutCount),
               instancePlan.getResource().getRam());
+        }
+      }
+    }
+  }
+
+  /**
+   * Test the scenario CPU map config is partially set
+   */
+  @Test
+  public void testPartialCpuMap() throws Exception {
+    int numContainers = 2;
+    int spoutParallelism = 4;
+    int boltParallelism = 3;
+    Integer totalInstances = spoutParallelism + boltParallelism;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    // Explicit set resources for container
+    double containerCpu = 17;
+
+    // Explicit set component CPU map
+    double boltCpu = 4;
+
+    topologyConfig.setContainerCpuRequested(containerCpu);
+    topologyConfig.setComponentCpu(BOLT_NAME, boltCpu);
+
+    TopologyAPI.Topology topologyExplicitCpuMap =
+        getTopology(spoutParallelism, boltParallelism, topologyConfig);
+    PackingPlan packingPlanExplicitCpuMap =
+        getRoundRobinPackingPlan(topologyExplicitCpuMap);
+    Assert.assertEquals(totalInstances, packingPlanExplicitCpuMap.getInstanceCount());
+
+    // CPU for bolt should be the value in component CPU map
+    for (PackingPlan.ContainerPlan containerPlan : packingPlanExplicitCpuMap.getContainers()) {
+      Assert.assertEquals(containerCpu, containerPlan.getRequiredResource().getCpu(), DELTA);
+      int boltCount = 0;
+      int instancesCount = containerPlan.getInstances().size();
+      for (PackingPlan.InstancePlan instancePlan : containerPlan.getInstances()) {
+        if (instancePlan.getComponentName().equals(BOLT_NAME)) {
+          Assert.assertEquals(boltCpu, instancePlan.getResource().getCpu(), DELTA);
+          boltCount++;
+        }
+      }
+
+      // CPU for spout should be:
+      // (containerCpu - all CPU for bolt - CPU for padding) / (# of spouts)
+      int spoutCount = instancesCount - boltCount;
+      for (PackingPlan.InstancePlan instancePlan : containerPlan.getInstances()) {
+        if (instancePlan.getComponentName().equals(SPOUT_NAME)) {
+          Assert.assertEquals(
+              (containerCpu
+                  - boltCpu * boltCount
+                  - RoundRobinPacking.DEFAULT_CPU_PADDING_PER_CONTAINER)
+                  / spoutCount,
+              instancePlan.getResource().getCpu(), DELTA);
         }
       }
     }
@@ -346,10 +558,10 @@ public class RoundRobinPackingTest {
 
 
   /**
-   * test re-packing of instances
+   * test re-packing with same total instances
    */
   @Test
-  public void testRePacking() throws Exception {
+  public void testRepackingWithSameTotalInstances() throws Exception {
     int numContainers = 2;
     int componentParallelism = 4;
 
@@ -386,6 +598,94 @@ public class RoundRobinPackingTest {
     }
     Assert.assertEquals(componentParallelism - 1, spoutCount);
     Assert.assertEquals(componentParallelism + 1, boltCount);
+  }
+
+  /**
+   * test re-packing with more total instances
+   */
+  @Test
+  public void testRepackingWithMoreTotalInstances() throws Exception {
+    int numContainers = 2;
+    int componentParallelism = 4;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    TopologyAPI.Topology topology =
+        getTopology(componentParallelism, componentParallelism, topologyConfig);
+
+    int numInstance = TopologyUtils.getTotalInstance(topology);
+    // Two components
+    Assert.assertEquals(2 * componentParallelism, numInstance);
+
+    Map<String, Integer> componentChanges = new HashMap<>();
+    componentChanges.put(SPOUT_NAME, +1);
+    componentChanges.put(BOLT_NAME,  +1);
+    PackingPlan output = getRoundRobinRePackingPlan(topology, componentChanges);
+    Assert.assertEquals(numContainers + 1, output.getContainers().size());
+    Assert.assertEquals((Integer) (numInstance + 2), output.getInstanceCount());
+
+    int spoutCount = 0;
+    int boltCount = 0;
+    for (PackingPlan.ContainerPlan container : output.getContainers()) {
+      Assert.assertTrue((double) container.getInstances().size()
+          <= (double) numInstance / numContainers);
+
+      for (PackingPlan.InstancePlan instancePlan : container.getInstances()) {
+        if (SPOUT_NAME.equals(instancePlan.getComponentName())) {
+          spoutCount++;
+        } else if (BOLT_NAME.equals(instancePlan.getComponentName())) {
+          boltCount++;
+        }
+      }
+    }
+    Assert.assertEquals(componentParallelism + 1, spoutCount);
+    Assert.assertEquals(componentParallelism + 1, boltCount);
+  }
+
+  /**
+   * test re-packing with fewer total instances
+   */
+  @Test
+  public void testRepackingWithFewerTotalInstances() throws Exception {
+    int numContainers = 2;
+    int componentParallelism = 4;
+
+    // Set up the topology and its config
+    org.apache.heron.api.Config topologyConfig = new org.apache.heron.api.Config();
+    topologyConfig.put(org.apache.heron.api.Config.TOPOLOGY_STMGRS, numContainers);
+
+    TopologyAPI.Topology topology =
+        getTopology(componentParallelism, componentParallelism, topologyConfig);
+
+    int numInstance = TopologyUtils.getTotalInstance(topology);
+    // Two components
+    Assert.assertEquals(2 * componentParallelism, numInstance);
+
+    Map<String, Integer> componentChanges = new HashMap<>();
+    componentChanges.put(SPOUT_NAME, -2);
+    componentChanges.put(BOLT_NAME,  -2);
+    PackingPlan output = getRoundRobinRePackingPlan(topology, componentChanges);
+    Assert.assertEquals(numContainers - 1, output.getContainers().size());
+    Assert.assertEquals((Integer) (numInstance - 4), output.getInstanceCount());
+
+    int spoutCount = 0;
+    int boltCount = 0;
+    for (PackingPlan.ContainerPlan container : output.getContainers()) {
+      Assert.assertTrue((double) container.getInstances().size()
+          <= (double) numInstance / numContainers);
+
+      for (PackingPlan.InstancePlan instancePlan : container.getInstances()) {
+        if (SPOUT_NAME.equals(instancePlan.getComponentName())) {
+          spoutCount++;
+        } else if (BOLT_NAME.equals(instancePlan.getComponentName())) {
+          boltCount++;
+        }
+      }
+    }
+    Assert.assertEquals(componentParallelism - 2, spoutCount);
+    Assert.assertEquals(componentParallelism - 2, boltCount);
   }
 
   private static void assertComponentCount(
