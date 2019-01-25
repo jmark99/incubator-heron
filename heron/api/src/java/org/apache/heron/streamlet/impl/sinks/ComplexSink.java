@@ -73,7 +73,7 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
     LOG.info(">>> ComplexSink - execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(10)) {
+    if (dropMessage(0)) {
       LOG.info(">>> ComplexSink - dropped msg: " + obj);
       return;
     }

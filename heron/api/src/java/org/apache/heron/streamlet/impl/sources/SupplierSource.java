@@ -91,8 +91,8 @@ public class SupplierSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values.get(0) + ", " + mid +
-          "]");
+      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values.get(0) + ", " + mid
+          + "]");
     }
   }
 

@@ -43,7 +43,7 @@ public class LogSink<R> extends StreamletOperator<R, R> {
     LOG.info(">>> LogSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(10)) {
+    if (dropMessage(0)) {
       LOG.info(">>> LogSink dropped msg: " + obj);
       return;
     }

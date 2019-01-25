@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.SpoutOutputCollector;
@@ -83,7 +82,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override
   public void nextTuple() {
     Collection<R> tuples = generator.get();
-    LOG.info(">>> tuples: " + tuples.toString());
+    LOG.info(">>> COMPLEXSOURCE tuples: " + tuples.toString());
     msgId = null;
     if (tuples != null) {
       for (R tuple : tuples) {
@@ -108,8 +107,8 @@ public class ComplexSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> COMPLEXSOURCE::failed --------> RE-EMIT  [" + values.get(0) + ", " + mid +
-          "]");
+      LOG.info(">>>> COMPLEXSOURCE::failed --------> RE-EMIT  [" + values.get(0) + ", " + mid
+          + "]");
     }
   }
 
