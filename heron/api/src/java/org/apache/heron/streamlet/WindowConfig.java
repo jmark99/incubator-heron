@@ -39,7 +39,7 @@ import org.apache.heron.streamlet.impl.windowings.TimeWindowConfig;
  */
 public interface WindowConfig {
 
-  final Logger LOG =
+  Logger LOG =
       Logger.getLogger(WindowConfig.class.getName());
 
   /**
