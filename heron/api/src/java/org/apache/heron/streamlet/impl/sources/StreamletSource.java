@@ -18,6 +18,7 @@
  */
 package org.apache.heron.streamlet.impl.sources;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -72,4 +73,12 @@ public abstract class StreamletSource extends BaseRichSpout
     String[] schema = {OUTPUT_FIELD_NAME};
     outputFieldsDeclarer.declare(new Fields(schema));
   }
+
+  public boolean outputTuple() {
+    if (new File("/tmp/.emitTuple").isFile()) {
+      return true;
+    }
+    return false;
+  }
+
 }

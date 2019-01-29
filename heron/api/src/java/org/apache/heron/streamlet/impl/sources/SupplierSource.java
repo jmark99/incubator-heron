@@ -29,6 +29,7 @@ import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableSupplier;
 import org.apache.heron.streamlet.impl.ContextImpl;
+import org.apache.heron.streamlet.impl.utils.StreamletUtils;
 
 import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
 import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
@@ -68,22 +69,27 @@ public class SupplierSource<R> extends StreamletSource {
   }
 
   @Override public void nextTuple() {
+    if (!outputTuple()) {
+      StreamletUtils.sleep(1000);
+      return;
+    }
     R r = supplier.get();
     if (!ackEnabled) {
       msgId = null;
     } else {
       msgId = getId();
       cache.put(msgId, r);
+      LOG.info(">>>  SUPPLIER added " + msgId + " added to cache");
     }
     collector.emit(new Values(r), msgId);
-    LOG.info(">>>> SUPPLIERSOURCE::nextTuple -> EMIT " + new Values(r, msgId));
+    LOG.info(">>>> SUPPLIER nextTuple ---> EMIT " + new Values(r, msgId));
   }
 
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
-      //R data = cache.get(mid);
-      LOG.info(">>>> SUPPLIERSOURCE::ack --------> ACKED [" + data + ", " + mid + "]");
+      LOG.info(">>>> SUPPLIER ack ---------> ACKED [" + data + ", " + mid + "]");
+      LOG.info(">>>  SUPPLIER removed " + data + " from cache");
     }
   }
 
@@ -91,8 +97,7 @@ public class SupplierSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> SUPPLIERSOURCE::failed -------> RE-EMIT  [" + values.get(0) + ", " + mid
-          + "]");
+      LOG.info(">>>> SUPPLIER failed ------> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
     }
   }
 
