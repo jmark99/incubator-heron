@@ -79,21 +79,23 @@ public class SupplierSource<R> extends StreamletSource {
     } else {
       msgId = getId();
       cache.put(msgId, r);
-      LOG.info(">>>  SUPPLIER added " + msgId + " added to cache");
+      LOG.info(">>>  SUPPLIER added (" + r + ", " + msgId + ") added to cache");
     }
     collector.emit(new Values(r), msgId);
     LOG.info(">>>> SUPPLIER nextTuple ---> EMIT " + new Values(r, msgId));
   }
 
   @Override public void ack(Object mid) {
+    LOG.info(">>> SUPPLIER ack...");
     if (ackEnabled) {
       R data = cache.remove(mid);
       LOG.info(">>>> SUPPLIER ack ---------> ACKED [" + data + ", " + mid + "]");
-      LOG.info(">>>  SUPPLIER removed " + data + " from cache");
+      LOG.info(">>>  SUPPLIER removed from cache - (" + data + ", " + mid + ")");
     }
   }
 
   @Override public void fail(Object mid) {
+    LOG.info(">>> SUPPLIER fail...");
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);

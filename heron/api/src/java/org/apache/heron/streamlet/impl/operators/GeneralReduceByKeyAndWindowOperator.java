@@ -80,6 +80,10 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
       KeyedWindow<K> keyedWindow = new KeyedWindow<>(key, window);
       collector.emit(inputWindow.get(), new Values(new KeyValue<>(keyedWindow,
           reduceMap.get(key))));
+      for (Tuple tuple : inputWindow.get()) {
+        collector.ack(tuple);
+        LOG.info(">>> GenRedKeyAndWinOper:execute sent ack for " + tuple);
+      }
     }
   }
 
