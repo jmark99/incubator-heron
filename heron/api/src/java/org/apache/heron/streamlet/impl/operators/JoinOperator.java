@@ -105,10 +105,10 @@ public class JoinOperator<K, V1, V2, VR> extends StreamletWindowOperator<V1, VR>
       }
     }
     evaluateJoinMap(joinMap, inputWindow);
-    for (Tuple tuple : inputWindow.get()) {
-      collector.ack(tuple);
-      LOG.info(">>> JoinOperator:execute sending ack for " + tuple);
-    }
+//    for (Tuple tuple : inputWindow.get()) {
+//      collector.ack(tuple);
+//      LOG.info(">>> JoinOperator:execute sending ack for " + tuple);
+//    }
   }
 
   private void evaluateJoinMap(Map<K, Pair<List<V1>, List<V2>>> joinMap, TupleWindow tupleWindow) {
