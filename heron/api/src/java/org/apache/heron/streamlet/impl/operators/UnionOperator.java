@@ -39,6 +39,7 @@ public class UnionOperator<I> extends StreamletOperator<I, I> {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
+    LOG.info(">>> UnionOperator:execute");
     I obj = (I) tuple.getValue(0);
     collector.emit(tuple, new Values(obj));
     collector.ack(tuple);

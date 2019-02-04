@@ -74,8 +74,8 @@ public abstract class StreamletSource extends BaseRichSpout
     outputFieldsDeclarer.declare(new Fields(schema));
   }
 
-  public boolean outputTuple() {
-    if (new File("/tmp/.emitTuple").isFile()) {
+  public boolean outputTuples() {
+    if (!new File("/tmp/.noTuple").isFile()) {
       return true;
     }
     return false;

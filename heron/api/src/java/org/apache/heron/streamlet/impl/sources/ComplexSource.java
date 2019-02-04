@@ -82,7 +82,7 @@ public class ComplexSource<R> extends StreamletSource {
 
   @Override
   public void nextTuple() {
-    if (!outputTuple()) {
+    if (!outputTuples()) {
       StreamletUtils.sleep(1000);
       return;
     }
