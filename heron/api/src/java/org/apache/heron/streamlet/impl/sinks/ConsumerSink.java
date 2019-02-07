@@ -46,12 +46,12 @@ public class ConsumerSink<R> extends StreamletOperator<R, R> {
     LOG.info(">>> ConsumerSink:execute processing tuple: " + tuple.toString());
     R obj = (R) tuple.getValue(0);
 
-    if (dropMessage(0)) {
-      LOG.info(">>> ConsumerSink dropped msg: " + obj);
-      return;
-    }
+//    if (dropMessage(0)) {
+//      LOG.info(">>> ConsumerSink dropped msg: " + obj);
+//      return;
+//    }
     consumer.accept(obj);
     collector.ack(tuple);
-    LOG.info(">>>  ConsumerSink sent ack...for " + tuple.toString()); //for " + tuple.toString());
+//    LOG.info(">>>  ConsumerSink sent ack...for " + tuple.toString()); //for " + tuple.toString());
   }
 }

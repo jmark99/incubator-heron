@@ -49,7 +49,6 @@ public class ComplexSource<R> extends StreamletSource {
   private Source<R> generator;
   private State<Serializable, Serializable> state;
 
-  //o private Map<String, Collection<R>> cache = new HashMap<>();
   private Map<String, R> cache = new HashMap<>();
   private boolean ackEnabled = false;
   private String msgId = null;
@@ -87,7 +86,7 @@ public class ComplexSource<R> extends StreamletSource {
       return;
     }
     Collection<R> tuples = generator.get();
-    LOG.info(">>> COMPLEX tuples: " + tuples.toString());
+    //LOG.info(">>> COMPLEX tuples: " + tuples.toString());
     msgId = null;
     if (tuples != null) {
       for (R tuple : tuples) {
@@ -96,7 +95,7 @@ public class ComplexSource<R> extends StreamletSource {
           cache.put(msgId, tuple);
         }
         collector.emit(new Values(tuple), msgId);
-        LOG.info(">>>> COMPLEX nextTuple ---> EMIT " + new Values(tuple, msgId));
+        LOG.info(">>>> EMIT " + new Values(tuple, msgId));
       }
     }
   }
@@ -104,7 +103,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
-      LOG.info(">>>> COMPLEX ack  --------> ACKED [" + data + ", " + mid + "]");
+      LOG.info(">>>> ACKED [" + data + ", " + mid + "]");
     }
   }
 
@@ -112,7 +111,7 @@ public class ComplexSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> COMPLEX failed ------> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
+      LOG.info(">>>> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
     }
   }
 

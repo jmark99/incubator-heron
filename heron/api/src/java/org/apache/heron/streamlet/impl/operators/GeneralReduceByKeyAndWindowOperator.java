@@ -57,6 +57,9 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(TupleWindow inputWindow) {
+    for (Tuple t : inputWindow.get()) {
+      LOG.info(">>> grbkw:execute - inputWindow" + t.getValues().toString());
+    }
     Map<K, T> reduceMap = new HashMap<>();
     Map<K, Integer> windowCountMap = new HashMap<>();
     for (Tuple tuple : inputWindow.get()) {

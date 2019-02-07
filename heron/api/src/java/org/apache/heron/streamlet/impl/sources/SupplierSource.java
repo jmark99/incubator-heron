@@ -76,31 +76,31 @@ public class SupplierSource<R> extends StreamletSource {
     R r = supplier.get();
     if (!ackEnabled) {
       msgId = null;
-      LOG.info(">>> SUPPLIER:nextTuple - msgId = null");
+      //LOG.info(">>> SUPPLIER:nextTuple - msgId = null");
     } else {
       msgId = getId();
       cache.put(msgId, r);
-      LOG.info(">>>  SUPPLIER:nextTuple -  added (" + r + ", " + msgId + ") added to cache");
+      //LOG.info(">>>  SUPPLIER:nextTuple -  added (" + r + ", " + msgId + ") added to cache");
     }
     collector.emit(new Values(r), msgId);
-    LOG.info(">>>> SUPPLIER:nextTuple ---> EMIT " + new Values(r, msgId));
+    LOG.info(">>>> EMIT " + new Values(r, msgId));
   }
 
   @Override public void ack(Object mid) {
-    LOG.info(">>> SUPPLIER:ack...");
+    //LOG.info(">>> SUPPLIER:ack...");
     if (ackEnabled) {
       R data = cache.remove(mid);
-      LOG.info(">>>> SUPPLIER:ack ---------> ACKED [" + data + ", " + mid + "]");
-      LOG.info(">>>  SUPPLIER:ack - removed from cache - (" + data + ", " + mid + ")");
+      LOG.info(">>>> ACKED [" + data + ", " + mid + "]");
+      //LOG.info(">>>  SUPPLIER:ack - removed from cache - (" + data + ", " + mid + ")");
     }
   }
 
   @Override public void fail(Object mid) {
-    LOG.info(">>> SUPPLIER:fail...");
+    //LOG.info(">>> SUPPLIER:fail...");
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> SUPPLIER:fail - ------> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
+      LOG.info(">>>> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
     }
   }
 
