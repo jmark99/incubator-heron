@@ -21,7 +21,6 @@ package org.apache.heron.streamlet.impl.sources;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.SpoutOutputCollector;
@@ -29,7 +28,6 @@ import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableSupplier;
 import org.apache.heron.streamlet.impl.ContextImpl;
-import org.apache.heron.streamlet.impl.utils.StreamletUtils;
 
 import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
 import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
@@ -52,7 +50,6 @@ public class SupplierSource<R> extends StreamletSource {
   private String msgId = null;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
-    LOG.info(">>> using SupplierSource...");
     this.supplier = supplier;
     msgId = getId();
   }
@@ -69,42 +66,31 @@ public class SupplierSource<R> extends StreamletSource {
   }
 
   @Override public void nextTuple() {
-    if (!outputTuples()) {
-      StreamletUtils.sleep(1000);
-      return;
-    }
     R r = supplier.get();
     if (!ackEnabled) {
       msgId = null;
-      //LOG.info(">>> SUPPLIER:nextTuple - msgId = null");
     } else {
       msgId = getId();
       cache.put(msgId, r);
-      //LOG.info(">>>  SUPPLIER:nextTuple -  added (" + r + ", " + msgId + ") added to cache");
     }
     collector.emit(new Values(r), msgId);
-    LOG.info(">>>> EMIT " + new Values(r, msgId));
+    LOG.info("Emitting [" + new Values(r, msgId) + "]");
   }
 
   @Override public void ack(Object mid) {
-    //LOG.info(">>> SUPPLIER:ack...");
     if (ackEnabled) {
       R data = cache.remove(mid);
-      LOG.info(">>>> ACKED [" + data + ", " + mid + "]");
-      //LOG.info(">>>  SUPPLIER:ack - removed from cache - (" + data + ", " + mid + ")");
+      LOG.info("Acking   [" + data + ", " + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
-    //LOG.info(">>> SUPPLIER:fail...");
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
+      LOG.info("Re-send  [" + values.get(0) + ", " + mid + "]");
     }
   }
-
-  private static AtomicLong idCounter = new AtomicLong();
 
   private String getId() {
     return "id-" + getUUID();

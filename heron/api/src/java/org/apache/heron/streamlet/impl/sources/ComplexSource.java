@@ -32,7 +32,6 @@ import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.impl.ContextImpl;
-import org.apache.heron.streamlet.impl.utils.StreamletUtils;
 
 import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
 import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
@@ -54,7 +53,6 @@ public class ComplexSource<R> extends StreamletSource {
   private String msgId = null;
 
   public ComplexSource(Source<R> generator) {
-    LOG.info(">>>> using ComplexSource...");
     this.generator = generator;
     msgId = getId();
   }
@@ -90,7 +88,7 @@ public class ComplexSource<R> extends StreamletSource {
           cache.put(msgId, tuple);
         }
         collector.emit(new Values(tuple), msgId);
-        LOG.info(">>>> EMIT " + new Values(tuple, msgId));
+        LOG.info("Emitting [" + new Values(r, msgId) + "]");
       }
     }
   }
@@ -98,7 +96,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackEnabled) {
       R data = cache.remove(mid);
-      LOG.info(">>>> ACKED [" + data + ", " + mid + "]");
+      LOG.info("Acking   [" + data + ", " + mid + "]");
     }
   }
 
@@ -106,7 +104,7 @@ public class ComplexSource<R> extends StreamletSource {
     if (ackEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info(">>>> RE-EMIT  [" + values.get(0) + ", " + mid + "]");
+      LOG.info("Re-send  [" + values.get(0) + ", " + mid + "]");
     }
   }
 
