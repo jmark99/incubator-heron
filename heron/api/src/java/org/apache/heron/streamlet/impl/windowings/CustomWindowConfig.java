@@ -34,7 +34,6 @@ public final class CustomWindowConfig implements WindowConfig {
 
   public CustomWindowConfig(TriggerPolicy<Tuple, ?> triggerPolicy,
                           EvictionPolicy<Tuple, ?> evictionPolicy) {
-    LOG.info(">>> using CustomWindowConfig");
     this.triggerPolicy = triggerPolicy;
     this.evictionPolicy = evictionPolicy;
   }

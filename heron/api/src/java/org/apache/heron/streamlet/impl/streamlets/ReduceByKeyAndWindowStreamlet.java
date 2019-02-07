@@ -52,7 +52,6 @@ public class ReduceByKeyAndWindowStreamlet<R, K, T>
                        SerializableFunction<R, T> valueExtractor,
                        WindowConfig windowCfg,
                        SerializableBinaryOperator<T> reduceFn) {
-    LOG.info(">>> using ReduceByKeyAndWindowStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;

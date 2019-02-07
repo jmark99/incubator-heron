@@ -36,7 +36,6 @@ public class SupplierStreamlet<R> extends StreamletImpl<R> {
   private SerializableSupplier<R> supplier;
 
   public SupplierStreamlet(SerializableSupplier<R> supplier) {
-    LOG.info(">>> using SupplierStreamlet");
     this.supplier = supplier;
     setNumPartitions(1);
   }

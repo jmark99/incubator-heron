@@ -34,7 +34,6 @@ import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Sink;
 import org.apache.heron.streamlet.Streamlet;
-import org.apache.heron.streamlet.impl.BuilderImpl;
 
 /**
  * This topology demonstrates clone operations on streamlets in the Heron
@@ -46,9 +45,6 @@ import org.apache.heron.streamlet.impl.BuilderImpl;
  * logging sink while the other goes to a dummy database sink.
  */
 public final class StreamletCloneTopology {
-
-  private static boolean useSimulator = true;
-
   private StreamletCloneTopology() {
   }
 
@@ -71,7 +67,6 @@ public final class StreamletCloneTopology {
     private int score;
 
     GameScore() {
-      StreamletUtils.sleep(1000);
       this.playerId = StreamletUtils.randomFromList(PLAYERS);
       this.score = ThreadLocalRandom.current().nextInt(1000);
     }
@@ -93,14 +88,14 @@ public final class StreamletCloneTopology {
     private static final long serialVersionUID = 5544736723673011054L;
 
     private void saveToDatabase(GameScore score) {
-      LOG.info(">>>> saved to database: " + score.score);
+      // This is a dummy operation, so no database logic will be implemented here
     }
 
     public void setup(Context context) {
     }
 
     public void put(GameScore score) {
-      String logMessage = String.format(">>>> Saving a score of %d for player %s to the database",
+      String logMessage = String.format("Saving a score of %d for player %s to the database",
           score.getScore(),
           score.getPlayerId());
       LOG.info(logMessage);
@@ -120,7 +115,7 @@ public final class StreamletCloneTopology {
     }
 
     public void put(GameScore score) {
-      String logMessage = String.format(">>>> The current score for player %s is %d",
+      String logMessage = String.format("The current score for player %s is %d",
           score.getPlayerId(),
           score.getScore());
       LOG.info(logMessage);
@@ -135,12 +130,6 @@ public final class StreamletCloneTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
-
-    if (args != null && args.length > 0) {
-      useSimulator = false;
-    }
-    LOG.info(">>>> ****** useSimulator : " + useSimulator);
-
     Builder processingGraphBuilder = Builder.newBuilder();
 
     /**
@@ -163,21 +152,13 @@ public final class StreamletCloneTopology {
     splitGameScoreStreamlet.get(1)
         .toSink(new FormattedLogSink());
 
+    Config config = Config.defaultConfig();
 
-    Config config = Config.newBuilder()
-        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
-        .build();
+    // Fetches the topology name from the first command-line argument
+    String topologyName = StreamletUtils.getTopologyName(args);
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    if (useSimulator) {
-      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
-    } else {
-      // Fetches the topology name from the first command-line argument
-      String topologyName = StreamletUtils.getTopologyName(args);
-      // Finally, the processing graph and configuration are passed to the Runner, which converts
-      // the graph into a Heron topology that can be run in a Heron cluster.
-      new Runner().run(topologyName, config, processingGraphBuilder);
-    }
+    new Runner().run(topologyName, config, processingGraphBuilder);
   }
 }

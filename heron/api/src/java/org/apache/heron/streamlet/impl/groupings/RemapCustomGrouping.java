@@ -39,7 +39,6 @@ public class RemapCustomGrouping<R> implements CustomStreamGrouping {
   private SerializableBiFunction<? super R, Integer, List<Integer>> remapFn;
 
   public RemapCustomGrouping(SerializableBiFunction<? super R, Integer, List<Integer>> remapFn) {
-    LOG.info(">>> using RemapCustomGrouping");
     this.remapFn = remapFn;
   }
 

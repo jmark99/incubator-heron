@@ -34,7 +34,6 @@ public class LogStreamlet<R> extends StreamletImpl<R> {
   private StreamletImpl<R> parent;
 
   public LogStreamlet(StreamletImpl<R> parent) {
-    LOG.info(">>> using LogStreamlet");
     this.parent = parent;
     setNumPartitions(parent.getNumPartitions());
   }

@@ -31,7 +31,6 @@ import org.apache.heron.streamlet.Config;
 import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Runner;
 import org.apache.heron.streamlet.Source;
-import org.apache.heron.streamlet.impl.BuilderImpl;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -42,9 +41,6 @@ import org.apache.pulsar.client.api.PulsarClientException;
  * injects incoming messages into the processing graph.
  */
 public final class SimplePulsarSourceTopology {
-
-  private static boolean useSimulator = true;
-
   private SimplePulsarSourceTopology() {
   }
 
@@ -102,12 +98,6 @@ public final class SimplePulsarSourceTopology {
    * at runtime
    */
   public static void main(String[] args) throws Exception {
-
-    if (args != null && args.length > 0) {
-      useSimulator = false;
-    }
-    LOG.info(">>>> ****** useSimulator : " + useSimulator);
-
     Builder processingGraphBuilder = Builder.newBuilder();
 
     /**
@@ -129,21 +119,13 @@ public final class SimplePulsarSourceTopology {
         .setName("incoming-pulsar-messages")
         .consume(s -> LOG.info(String.format("Message received from Pulsar: \"%s\"", s)));
 
-    //Config config = Config.defaultConfig();
-    Config config = Config.newBuilder()
-        .setDeliverySemantics(Config.DeliverySemantics.ATLEAST_ONCE)
-        .build();
+    Config config = Config.defaultConfig();
+
+    // Fetches the topology name from the first command-line argument
+    String topologyName = StreamletUtils.getTopologyName(args);
 
     // Finally, the processing graph and configuration are passed to the Runner, which converts
     // the graph into a Heron topology that can be run in a Heron cluster.
-    if (useSimulator) {
-      StreamletUtils.runInSimulatorMode((BuilderImpl) processingGraphBuilder, config);
-    } else {
-      // Fetches the topology name from the first command-line argument
-      String topologyName = StreamletUtils.getTopologyName(args);
-      // Finally, the processing graph and configuration are passed to the Runner, which converts
-      // the graph into a Heron topology that can be run in a Heron cluster.
-      new Runner().run(topologyName, config, processingGraphBuilder);
-    }
+    new Runner().run(topologyName, config, processingGraphBuilder);
   }
 }

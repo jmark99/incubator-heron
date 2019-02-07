@@ -52,7 +52,6 @@ public class GeneralReduceByKeyAndWindowStreamlet<R, K, T>
                             WindowConfig windowCfg,
                             T identity,
                             SerializableBiFunction<T, R, ? extends T> reduceFn) {
-    LOG.info(">>> using GeneralReduceByKeyAndWindowStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.windowCfg = windowCfg;

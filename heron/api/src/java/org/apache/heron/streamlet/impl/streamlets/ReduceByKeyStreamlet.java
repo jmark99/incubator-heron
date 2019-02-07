@@ -46,7 +46,6 @@ public class ReduceByKeyStreamlet<R, K, T> extends StreamletImpl<KeyValue<K, T>>
                               SerializableFunction<R, K> keyExtractor,
                               SerializableFunction<R, T> valueExtractor,
                               SerializableBinaryOperator<T> reduceFn) {
-    LOG.info(">>> using ReduceByKeyStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;

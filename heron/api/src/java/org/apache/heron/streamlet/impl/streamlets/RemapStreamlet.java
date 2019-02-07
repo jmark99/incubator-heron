@@ -42,7 +42,6 @@ public class RemapStreamlet<R> extends StreamletImpl<R> {
 
   public RemapStreamlet(StreamletImpl<R> parent,
                         SerializableBiFunction<? super R, Integer, List<Integer>> remapFn) {
-    LOG.info(">>> using RemapStreamlet");
     this.parent = parent;
     this.remapFn = remapFn;
     setNumPartitions(parent.getNumPartitions());

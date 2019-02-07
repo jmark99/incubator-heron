@@ -36,7 +36,6 @@ public class MapStreamlet<R, T> extends StreamletImpl<T> {
   private SerializableFunction<? super R, ? extends T> mapFn;
 
   public MapStreamlet(StreamletImpl<R> parent, SerializableFunction<? super R, ? extends T> mapFn) {
-    LOG.info(">>> using MapStreamlet");
     this.parent = parent;
     this.mapFn = mapFn;
     setNumPartitions(parent.getNumPartitions());

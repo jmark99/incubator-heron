@@ -47,7 +47,6 @@ public class CountByKeyAndWindowStreamlet<R, K>
   public CountByKeyAndWindowStreamlet(StreamletImpl<R> parent,
                                       SerializableFunction<R, K> keyExtractor,
                                       WindowConfig windowCfg) {
-    LOG.info(">>> CountByKeyAndWindowStreamlet");
     this.parent = parent;
     this.keyExtractor = keyExtractor;
     this.windowCfg = windowCfg;
