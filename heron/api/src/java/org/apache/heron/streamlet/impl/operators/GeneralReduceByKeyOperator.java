@@ -46,7 +46,6 @@ public class GeneralReduceByKeyOperator<R, K, T> extends StreamletOperator<R, Ke
   public GeneralReduceByKeyOperator(SerializableFunction<R, K> keyExtractor,
                                     T identity,
                                     SerializableBiFunction<T, R, ? extends T> reduceFn) {
-    LOG.info(">>> using GeneralReduceByKeyOperator");
     this.keyExtractor = keyExtractor;
     this.identity = identity;
     this.reduceFn = reduceFn;

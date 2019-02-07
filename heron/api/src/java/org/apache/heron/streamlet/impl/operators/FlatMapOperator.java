@@ -35,7 +35,6 @@ public class FlatMapOperator<R, T> extends StreamletOperator<R, T> {
 
   public FlatMapOperator(
       SerializableFunction<? super R, ? extends Iterable<? extends T>> flatMapFn) {
-    LOG.info(">>> using FlatMapOperator");
     this.flatMapFn = flatMapFn;
   }
 
@@ -46,7 +45,6 @@ public class FlatMapOperator<R, T> extends StreamletOperator<R, T> {
     Iterable<? extends T> result = flatMapFn.apply(obj);
     for (T o : result) {
       collector.emit(tuple, new Values(o));
-      LOG.info(">>> flatmapOp: emit - " + o);
     }
     collector.ack(tuple);
   }

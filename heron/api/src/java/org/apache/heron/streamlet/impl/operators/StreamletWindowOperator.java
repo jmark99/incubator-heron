@@ -20,7 +20,6 @@
 package org.apache.heron.streamlet.impl.operators;
 
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.BaseWindowedBolt;
 import org.apache.heron.api.bolt.OutputCollector;
@@ -40,8 +39,6 @@ public abstract class StreamletWindowOperator<R, T>
   private static final long serialVersionUID = -4836560876041237959L;
   private static final String OUTPUT_FIELD_NAME = "output";
   protected OutputCollector collector;
-
-  public static final Logger LOG = Logger.getLogger(StreamletWindowOperator.class.getName());
 
   @SuppressWarnings("rawtypes")
   @Override

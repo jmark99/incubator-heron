@@ -48,7 +48,6 @@ public class ReduceByKeyAndWindowOperator<R, K, T>
   public ReduceByKeyAndWindowOperator(SerializableFunction<R, K> keyExtractor,
                                       SerializableFunction<R, T> valueExtractor,
                                       SerializableBinaryOperator<T> reduceFn) {
-    LOG.info(">>> using ReduceByKeyAndWindowOperator");
     this.keyExtractor = keyExtractor;
     this.valueExtractor = valueExtractor;
     this.reduceFn = reduceFn;
@@ -57,9 +56,6 @@ public class ReduceByKeyAndWindowOperator<R, K, T>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(TupleWindow inputWindow) {
-    for (Tuple t : inputWindow.get()) {
-      LOG.info(">>> rbkw:execute - inputWindow" + t.getValues().toString());
-    }
     Map<K, T> reduceMap = new HashMap<>();
     Map<K, Integer> windowCountMap = new HashMap<>();
     for (Tuple tuple : inputWindow.get()) {
@@ -81,12 +77,7 @@ public class ReduceByKeyAndWindowOperator<R, K, T>
     for (K key : reduceMap.keySet()) {
       Window window = new Window(startWindow, endWindow, windowCountMap.get(key));
       KeyedWindow<K> keyedWindow = new KeyedWindow<>(key, window);
-      collector.emit(inputWindow.get(), new Values(new KeyValue<>(keyedWindow,
-          reduceMap.get(key))));
-//      for (Tuple tuple : inputWindow.get()) {
-//        collector.ack(tuple);
-//        LOG.info(">>> RedKeyAndWinOper:execute sent ack for " + tuple);
-//      }
+      collector.emit(inputWindow.get(), new Values(new KeyValue<>(keyedWindow, reduceMap.get(key))));
     }
   }
 

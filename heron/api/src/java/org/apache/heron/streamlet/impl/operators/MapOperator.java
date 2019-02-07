@@ -19,8 +19,6 @@
 
 package org.apache.heron.streamlet.impl.operators;
 
-import java.util.logging.Logger;
-
 import org.apache.heron.api.tuple.Tuple;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableFunction;
@@ -31,12 +29,10 @@ import org.apache.heron.streamlet.SerializableFunction;
  * For every tuple, it applies the mapFunction, and emits the resulting value
  */
 public class MapOperator<R, T> extends StreamletOperator<R, T> {
-  private static final Logger LOG = Logger.getLogger(MapOperator.class.getName());
   private static final long serialVersionUID = -1303096133107278700L;
   private SerializableFunction<? super R, ? extends T> mapFn;
 
   public MapOperator(SerializableFunction<? super R, ? extends T> mapFn) {
-    LOG.info(">>> using MapOperator");
     this.mapFn = mapFn;
   }
 

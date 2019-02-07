@@ -21,7 +21,6 @@ package org.apache.heron.streamlet.impl.sinks;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.OutputCollector;
 import org.apache.heron.api.state.State;
@@ -39,13 +38,12 @@ import org.apache.heron.streamlet.impl.operators.StreamletOperator;
  */
 public class ComplexSink<R> extends StreamletOperator<R, R>
     implements IStatefulComponent<Serializable, Serializable> {
-  private static final Logger LOG = Logger.getLogger(ComplexSink.class.getName());
+
   private static final long serialVersionUID = 8717991188885786658L;
   private Sink<R> sink;
   private State<Serializable, Serializable> state;
 
   public ComplexSink(Sink<R> sink) {
-    LOG.info(">>> using ComplexSink");
     this.sink = sink;
   }
 
@@ -70,16 +68,8 @@ public class ComplexSink<R> extends StreamletOperator<R, R>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    LOG.info(">>> ComplexSink - execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
-
-//    if (dropMessage(0)) {
-//      LOG.info(">>> ComplexSink - dropped msg: " + obj);
-//      return;
-//    }
-
     sink.put(obj);
     collector.ack(tuple);
-//    LOG.info(">>>  ComplexSink - sent ack for " + obj);
   }
 }

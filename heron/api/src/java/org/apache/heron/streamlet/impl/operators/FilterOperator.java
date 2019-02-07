@@ -19,8 +19,6 @@
 
 package org.apache.heron.streamlet.impl.operators;
 
-import java.util.logging.Logger;
-
 import org.apache.heron.api.tuple.Tuple;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializablePredicate;
@@ -33,12 +31,9 @@ import org.apache.heron.streamlet.SerializablePredicate;
  */
 public class FilterOperator<R> extends StreamletOperator<R, R> {
   private static final long serialVersionUID = -4748646871471052706L;
-  private static final Logger LOG = Logger.getLogger(FilterOperator.class.getName());
-
   private SerializablePredicate<? super R> filterFn;
 
   public FilterOperator(SerializablePredicate<? super R> filterFn) {
-    LOG.info(">>> using FilterOperator");
     this.filterFn = filterFn;
   }
 

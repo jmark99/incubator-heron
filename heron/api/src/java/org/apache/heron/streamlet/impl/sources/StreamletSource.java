@@ -18,10 +18,8 @@
  */
 package org.apache.heron.streamlet.impl.sources;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.BaseRichSpout;
 import org.apache.heron.api.spout.SpoutOutputCollector;
@@ -39,13 +37,7 @@ public abstract class StreamletSource extends BaseRichSpout
     implements IStatefulComponent<Serializable, Serializable> {
 
   private static final long serialVersionUID = 8583965332619565343L;
-  private static final Logger LOG = Logger.getLogger(StreamletSource.class.getName());
-
-  static final String OUTPUT_FIELD_NAME = "output";
-
-  public StreamletSource() {
-    LOG.info(">>>> StreamletSource Constructor called");
-  }
+  private static final String OUTPUT_FIELD_NAME = "output";
 
   protected SpoutOutputCollector collector;
 
@@ -70,15 +62,6 @@ public abstract class StreamletSource extends BaseRichSpout
    */
   @Override
   public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    String[] schema = {OUTPUT_FIELD_NAME};
-    outputFieldsDeclarer.declare(new Fields(schema));
+    outputFieldsDeclarer.declare(new Fields(OUTPUT_FIELD_NAME));
   }
-
-  public boolean outputTuples() {
-    if (!new File("/tmp/.noTuple").isFile()) {
-      return true;
-    }
-    return false;
-  }
-
 }

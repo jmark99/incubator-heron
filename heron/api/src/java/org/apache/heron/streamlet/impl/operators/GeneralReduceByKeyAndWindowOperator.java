@@ -48,7 +48,6 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
   public GeneralReduceByKeyAndWindowOperator(SerializableFunction<R, K> keyExtractor,
                                              T identity,
                                              SerializableBiFunction<T, R, ? extends T> reduceFn) {
-    LOG.info(">>> using GeneralReduceByKeyAndWindowOperator");
     this.keyExtractor = keyExtractor;
     this.identity = identity;
     this.reduceFn = reduceFn;
@@ -57,9 +56,6 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
   @SuppressWarnings("unchecked")
   @Override
   public void execute(TupleWindow inputWindow) {
-    for (Tuple t : inputWindow.get()) {
-      LOG.info(">>> grbkw:execute - inputWindow" + t.getValues().toString());
-    }
     Map<K, T> reduceMap = new HashMap<>();
     Map<K, Integer> windowCountMap = new HashMap<>();
     for (Tuple tuple : inputWindow.get()) {
@@ -83,10 +79,6 @@ public class GeneralReduceByKeyAndWindowOperator<R, K, T>
       KeyedWindow<K> keyedWindow = new KeyedWindow<>(key, window);
       collector.emit(inputWindow.get(), new Values(new KeyValue<>(keyedWindow,
           reduceMap.get(key))));
-//      for (Tuple tuple : inputWindow.get()) {
-//        collector.ack(tuple);
-//        LOG.info(">>> GenRedKeyAndWinOper:execute sent ack for " + tuple);
-//      }
     }
   }
 

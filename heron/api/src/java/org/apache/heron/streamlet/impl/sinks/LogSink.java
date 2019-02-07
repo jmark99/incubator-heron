@@ -34,22 +34,13 @@ public class LogSink<R> extends StreamletOperator<R, R> {
   private static final Logger LOG = Logger.getLogger(LogSink.class.getName());
 
   public LogSink() {
-    LOG.info(">>> using LogSink()");
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    LOG.info(">>> LogSink:execute processing " + tuple.toString());
     R obj = (R) tuple.getValue(0);
-
-//    if (dropMessage(0)) {
-//      LOG.info(">>> LogSink dropped msg: " + obj);
-//      return;
-//    }
-
-    LOG.info(">>> LOG: " + String.valueOf(obj));
+    LOG.info(String.valueOf(obj));
     collector.ack(tuple);
-//    LOG.info(">>> LogSink sent ack for " + obj);
   }
 }
