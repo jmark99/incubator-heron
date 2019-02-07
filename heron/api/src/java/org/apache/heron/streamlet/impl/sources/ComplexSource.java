@@ -81,12 +81,7 @@ public class ComplexSource<R> extends StreamletSource {
 
   @Override
   public void nextTuple() {
-    if (!outputTuples()) {
-      StreamletUtils.sleep(1000);
-      return;
-    }
     Collection<R> tuples = generator.get();
-    //LOG.info(">>> COMPLEX tuples: " + tuples.toString());
     msgId = null;
     if (tuples != null) {
       for (R tuple : tuples) {

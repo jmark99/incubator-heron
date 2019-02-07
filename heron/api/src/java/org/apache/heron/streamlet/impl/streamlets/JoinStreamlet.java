@@ -49,7 +49,6 @@ public final class JoinStreamlet<K, R, S, T> extends StreamletImpl<KeyValue<Keye
   private WindowConfig windowCfg;
   private SerializableBiFunction<R, S, ? extends T> joinFn;
 
-
   public static <A, B, C, D> JoinStreamlet<A, B, C, D>
       createJoinStreamlet(StreamletImpl<B> left,
                           StreamletImpl<C> right,
