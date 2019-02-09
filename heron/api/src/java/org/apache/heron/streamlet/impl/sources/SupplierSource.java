@@ -27,10 +27,6 @@ import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableSupplier;
-import org.apache.heron.streamlet.impl.ContextImpl;
-
-import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
-import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
 
 /**
  * SupplierSource is a way to wrap a supplier function inside a Heron Spout.
@@ -46,57 +42,46 @@ public class SupplierSource<R> extends StreamletSource {
   private SpoutOutputCollector collector;
 
   private Map<String, R> cache = new HashMap<>();
-  private boolean ackEnabled = false;
-  private String msgId = null;
+  private String msgId;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
     this.supplier = supplier;
-    msgId = getId();
   }
 
   @SuppressWarnings("rawtypes") @Override
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
-    ackEnabled = isAckingEnabled(map, topologyContext);
-  }
-
-  private boolean isAckingEnabled(Map map, TopologyContext topologyContext) {
-    ContextImpl context = new ContextImpl(topologyContext, map, null);
-    return context.getConfig().get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
+    ackingEnabled = isAckingEnabled(map, topologyContext);
   }
 
   @Override public void nextTuple() {
-    R r = supplier.get();
-    if (!ackEnabled) {
-      msgId = null;
+    msgId = null;
+    if (ackingEnabled) {
+      msgId = getUniqueMessageId();
+      cache.put(msgId, supplier.get());
+      collector.emit(new Values(supplier.get()), msgId);
     } else {
-      msgId = getId();
-      cache.put(msgId, r);
+      collector.emit(new Values(supplier.get()));
     }
-    collector.emit(new Values(r), msgId);
-    LOG.info("Emitting [" + new Values(r, msgId) + "]");
+    LOG.info("Emitting: " + new Values(supplier.get(), msgId));
   }
 
   @Override public void ack(Object mid) {
-    if (ackEnabled) {
+    if (ackingEnabled) {
       R data = cache.remove(mid);
-      LOG.info("Acking   [" + data + ", " + mid + "]");
+      LOG.info("Acked:    [" + data + ", " + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
-    if (ackEnabled) {
+    if (ackingEnabled) {
       Values values = new Values(cache.get(mid));
       collector.emit(values, mid);
-      LOG.info("Re-send  [" + values.get(0) + ", " + mid + "]");
+      LOG.info("Re-emit:  [" + values.get(0) + ", " + mid + "]");
     }
   }
 
-  private String getId() {
-    return "id-" + getUUID();
-  }
-
-  private String getUUID() {
+  private String getUniqueMessageId() {
     return UUID.randomUUID().toString();
   }
 }
