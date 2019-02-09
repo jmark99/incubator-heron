@@ -20,7 +20,6 @@ package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -45,7 +44,7 @@ public class ComplexSource<R> extends StreamletSource {
   private Source<R> generator;
   private State<Serializable, Serializable> state;
 
-  private Map<String, R> cache = new HashMap<>();
+  //private Map<String, R> cache = new HashMap<>();
   private String msgId;
 
   public ComplexSource(Source<R> generator) {
@@ -75,7 +74,8 @@ public class ComplexSource<R> extends StreamletSource {
       for (R tuple : tuples) {
         if (ackingEnabled) {
           msgId = getUniqueMessageId();
-          cache.put(msgId, tuple);
+          msgIdCache.put(msgId, tuple);
+          //cache.put(msgId, tuple);
           collector.emit(new Values(tuple), msgId);
         } else {
           collector.emit(new Values(tuple));
@@ -87,14 +87,17 @@ public class ComplexSource<R> extends StreamletSource {
 
   @Override public void ack(Object mid) {
     if (ackingEnabled) {
-      R data = cache.remove(mid);
-      LOG.info("Acked:    [" + data + ", " + mid + "]");
+      //R data = cache.remove(mid);
+      msgIdCache.invalidate(mid);
+      LOG.info("Acked:    [" + mid + "]");
+      LOG.info("Acked2:   [" + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
     if (ackingEnabled) {
-      Values values = new Values(cache.get(mid));
+      //Values values = new Values(cache.get(mid));
+      Values values = new Values(msgIdCache.getIfPresent(mid));
       collector.emit(values, mid);
       LOG.info("Re-emit:  [" + values.get(0) + ", " + mid + "]");
     }

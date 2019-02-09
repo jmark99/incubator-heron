@@ -20,7 +20,11 @@ package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import com.google.common.cache.Cache;
+
+import com.google.common.cache.CacheBuilder;
 import org.apache.heron.api.spout.BaseRichSpout;
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
@@ -46,6 +50,8 @@ public abstract class StreamletSource extends BaseRichSpout
   protected boolean ackingEnabled = false;
   protected SpoutOutputCollector collector;
 
+  protected Cache<String, Object> msgIdCache;
+
   @Override
   public void initState(State<Serializable, Serializable> state) { }
 
@@ -57,6 +63,13 @@ public abstract class StreamletSource extends BaseRichSpout
   public void open(Map<String, Object> map, TopologyContext topologyContext,
                    SpoutOutputCollector outputCollector) {
     collector = outputCollector;
+    msgIdCache = createCache();
+  }
+
+  // a convenience method for creating a metrics cache
+  <K, V> Cache<K, V> createCache() {
+    return CacheBuilder.newBuilder()
+        .build();
   }
 
   /**
