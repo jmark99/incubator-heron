@@ -1,5 +1,5 @@
 licenses(["notice"])
-
+# "//third_party/java:guava", # only used in WebSink
 package(default_visibility = ["//visibility:public"])
 
 load("//tools/rules:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
@@ -16,6 +16,7 @@ api_deps_files =  \
     heron_java_api_proto_files() + [
         ":classification",
         "//heron/common/src/java:basics-java",
+        "//third_party/java:guava"
     ]
 
 # Low Level Api
@@ -62,7 +63,8 @@ jarjar_binary(
     name = "api-shaded",
     src = ":api-unshaded_deploy.jar",
     shade = "shade.conf",
-    deps = ["@org_sonatype_plugins_jarjar_maven_plugin//jar"]
+    deps = ["@org_sonatype_plugins_jarjar_maven_plugin//jar",
+            "//third_party/java:guava"]
 )
 
 genrule(

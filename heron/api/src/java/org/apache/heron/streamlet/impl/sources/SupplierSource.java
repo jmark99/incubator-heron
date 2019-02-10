@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import com.google.common.cache.Cache;
+
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
@@ -41,6 +43,7 @@ public class SupplierSource<R> extends StreamletSource {
   private SpoutOutputCollector collector;
 
   //private Map<String, R> cache = new HashMap<>();
+  protected Cache<String, Object> msgIdCache;
   private String msgId;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
@@ -51,6 +54,7 @@ public class SupplierSource<R> extends StreamletSource {
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
     ackingEnabled = isAckingEnabled(map, topologyContext);
+    msgIdCache = createCache();
   }
 
   @Override public void nextTuple() {

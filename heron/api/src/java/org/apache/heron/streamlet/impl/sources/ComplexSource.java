@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import com.google.common.cache.Cache;
+
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
 import org.apache.heron.api.topology.TopologyContext;
@@ -45,6 +47,7 @@ public class ComplexSource<R> extends StreamletSource {
   private State<Serializable, Serializable> state;
 
   //private Map<String, R> cache = new HashMap<>();
+  protected Cache<String, Object> msgIdCache;
   private String msgId;
 
   public ComplexSource(Source<R> generator) {
@@ -64,6 +67,7 @@ public class ComplexSource<R> extends StreamletSource {
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
     ackingEnabled = isAckingEnabled(map, topologyContext);
+    msgIdCache = createCache();
   }
 
   @Override

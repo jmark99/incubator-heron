@@ -50,7 +50,7 @@ heron.logging.prune.interval.sec: 300
 heron.logging.flush.interval.sec: 10
 
 # The threshold level to log error
-heron.logging.err.threshold: 3
+heron.logging.err.threshold: 5
 
 # The interval in seconds for different components to export metrics to metrics manager
 heron.metrics.export.interval.sec: 60
