@@ -74,9 +74,7 @@ public class SupplierSource<R> extends StreamletSource {
     if (ackingEnabled) {
       //R data = cache.remove(mid);
       msgIdCache.invalidate(mid);
-      //LOG.info("Acked:    [" + data + ", " + mid + "]");
       LOG.info("Acked:    [" + mid + "]");
-      LOG.fine("Acked2:   [" + mid + "]");
     }
   }
 
