@@ -1,5 +1,4 @@
 licenses(["notice"])
-# "//third_party/java:guava", # only used in WebSink
 package(default_visibility = ["//visibility:public"])
 
 load("//tools/rules:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
