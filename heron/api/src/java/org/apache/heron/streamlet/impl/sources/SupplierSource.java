@@ -59,15 +59,16 @@ public class SupplierSource<R> extends StreamletSource {
 
   @Override public void nextTuple() {
     msgId = null;
+    R data = supplier.get();
     if (ackingEnabled) {
       msgId = getUniqueMessageId();
       //cache.put(msgId, supplier.get());
-      msgIdCache.put(msgId, supplier.get());
-      collector.emit(new Values(supplier.get()), msgId);
+      msgIdCache.put(msgId, data);
+      collector.emit(new Values(data), msgId);
     } else {
-      collector.emit(new Values(supplier.get()));
+      collector.emit(new Values(data));
     }
-    LOG.info("Emitting: " + new Values(supplier.get(), msgId));
+    LOG.info("Emitting: " + new Values(data, msgId));
   }
 
   @Override public void ack(Object mid) {

@@ -94,7 +94,6 @@ public class ComplexSource<R> extends StreamletSource {
       //R data = cache.remove(mid);
       msgIdCache.invalidate(mid);
       LOG.info("Acked:    [" + mid + "]");
-      LOG.info("Acked2:   [" + mid + "]");
     }
   }
 
