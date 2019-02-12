@@ -21,6 +21,9 @@ package org.apache.heron.streamlet.impl.sources;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import com.google.common.cache.Cache;
 
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
@@ -38,8 +41,12 @@ import org.apache.heron.streamlet.impl.ContextImpl;
 public class ComplexSource<R> extends StreamletSource {
 
   private static final long serialVersionUID = -5086763670301450007L;
+  private static final Logger LOG = Logger.getLogger(ComplexSource.class.getName());
   private Source<R> generator;
   private State<Serializable, Serializable> state;
+
+  protected Cache<String, Object> msgIdCache;
+  private String msgId;
 
   public ComplexSource(Source<R> generator) {
     this.generator = generator;
@@ -57,13 +64,43 @@ public class ComplexSource<R> extends StreamletSource {
     super.open(map, topologyContext, outputCollector);
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
+    ackingEnabled = isAckingEnabled(map, topologyContext);
+    msgIdCache = createCache();
   }
 
   @Override
   public void nextTuple() {
     Collection<R> tuples = generator.get();
+    msgId = null;
     if (tuples != null) {
-      tuples.forEach(tuple -> collector.emit(new Values(tuple)));
+      for (R tuple : tuples) {
+        if (ackingEnabled) {
+          msgId = getUniqueMessageId();
+          msgIdCache.put(msgId, tuple);
+          collector.emit(new Values(tuple), msgId);
+        } else {
+          collector.emit(new Values(tuple));
+        }
+        // TODO change logging level
+        LOG.info("Emitting: " + new Values(tuple, msgId));
+      }
+    }
+  }
+
+  @Override public void ack(Object mid) {
+    if (ackingEnabled) {
+      msgIdCache.invalidate(mid);
+      // TODO change logging level
+      LOG.info("Acked:    [" + mid + "]");
+    }
+  }
+
+  @Override public void fail(Object mid) {
+    if (ackingEnabled) {
+      Values values = new Values(msgIdCache.getIfPresent(mid));
+      collector.emit(values, mid);
+      // TODO change logging level
+      LOG.info("Re-emit:  [" + values.get(0) + ", " + mid + "]");
     }
   }
 }
