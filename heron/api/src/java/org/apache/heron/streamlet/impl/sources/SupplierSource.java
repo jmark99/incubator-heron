@@ -66,7 +66,7 @@ public class SupplierSource<R> extends StreamletSource {
       collector.emit(new Values(data));
     }
     // TODO change logging level
-    LOG.info("Emitting: " + new Values(data, msgId));
+    LOG.info("Emitting: [" + msgId + "]");
   }
 
   @Override public void ack(Object mid) {
@@ -82,7 +82,7 @@ public class SupplierSource<R> extends StreamletSource {
       Values values = new Values(msgIdCache.getIfPresent(mid));
       collector.emit(values, mid);
       // TODO change logging level
-      LOG.info("Re-emit:  [" + values.get(0) + ", " + mid + "]");
+      LOG.info("Re-emit:  [" + mid + "]");
     }
   }
 }

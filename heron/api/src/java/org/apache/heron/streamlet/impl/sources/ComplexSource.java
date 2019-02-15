@@ -82,7 +82,7 @@ public class ComplexSource<R> extends StreamletSource {
           collector.emit(new Values(tuple));
         }
         // TODO change logging level
-        LOG.info("Emitting: " + new Values(tuple, msgId));
+        LOG.info("Emitting: [" + msgId + "]");
       }
     }
   }
@@ -100,7 +100,7 @@ public class ComplexSource<R> extends StreamletSource {
       Values values = new Values(msgIdCache.getIfPresent(mid));
       collector.emit(values, mid);
       // TODO change logging level
-      LOG.info("Re-emit:  [" + values.get(0) + ", " + mid + "]");
+      LOG.info("Re-emit:  [" + mid + "]");
     }
   }
 }
