@@ -132,9 +132,11 @@ public class MapOperatorTest {
           }
 
           @Override public void ack(Tuple input) {
+            System.out.println(">>> calling ack");
           }
 
           @Override public void fail(Tuple input) {
+            System.out.println(">>> calling fail");
           }
         }));
 
