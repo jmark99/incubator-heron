@@ -93,6 +93,7 @@ public class BoltOutputCollectorImpl extends AbstractOutputCollector implements 
 
   @Override
   public void ack(Tuple input) {
+    System.out.println("Bolt: ack");
     admitAckTuple(input);
   }
 

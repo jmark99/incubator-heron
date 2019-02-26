@@ -19,10 +19,13 @@
 
 package org.apache.heron.streamlet.impl.operators;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
@@ -39,20 +42,13 @@ import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Fields;
 import org.apache.heron.api.tuple.Tuple;
 import org.apache.heron.api.tuple.Values;
-import org.apache.heron.api.windowing.TupleWindow;
-import org.apache.heron.api.windowing.TupleWindowImpl;
 import org.apache.heron.common.utils.topology.TopologyContextImpl;
 import org.apache.heron.common.utils.tuple.TupleImpl;
-import org.apache.heron.streamlet.KeyValue;
-import org.apache.heron.streamlet.KeyedWindow;
 
-public class GeneralReduceByKeyAndWindowOperatorTest {
+public class FlatMapOperatorTest {
 
   private List<Object> emittedTuples;
-  private long startTime = 1508099660801L;
-  private long endTime = startTime + 1000L;
-  private static final Logger LOG =
-      Logger.getLogger(GeneralReduceByKeyAndWindowOperator.class.getName());
+  private static final Logger LOG = Logger.getLogger(FlatMapOperator.class.getName());
 
   @Before
   public void setUp() {
@@ -60,104 +56,68 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
   }
 
   @Test
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  public void testReduceByWindowOperator() {
-    GeneralReduceByKeyAndWindowOperator<KeyValue<String, Integer>, String, Integer> reduceOperator =
-        getReduceByWindowOperator(12);
+  public void testFlatMapOperator() {
+    LOG.info("testing flatMapOperator");
+    FlatMapOperator<String, String> flatMapOperator = getFlatMapOperator();
 
-    TupleWindow tupleWindow = getTupleWindow(3, 5);
-    LOG.info("tupleWindow: " + tupleWindow);
-
-    HashMap<String, Integer> expectedResults = new HashMap<>();
-    expectedResults.put("0", 22);
-    expectedResults.put("1", 22);
-    expectedResults.put("2", 22);
-
-    reduceOperator.execute(tupleWindow);
-
-    Assert.assertEquals(3, emittedTuples.size());
-    for (Object object : emittedTuples) {
-      KeyValue<KeyedWindow<String>, Integer> tuple =
-          (KeyValue<KeyedWindow<String>, Integer>) object;
-      LOG.info("tuple: " + tuple);
-      KeyedWindow<String> window = tuple.getKey();
-      String key = window.getKey();
-      LOG.info("key: " + key);
-      Assert.assertEquals(5, window.getWindow().getCount());
-      Assert.assertEquals(startTime, window.getWindow().getStartTime());
-      Assert.assertEquals(endTime, window.getWindow().getEndTime());
-      Assert.assertEquals(expectedResults.get(key), tuple.getValue());
-    }
-  }
-
-  private TupleWindow getTupleWindow(int nkeys, int count) {
     TopologyAPI.StreamId componentStreamId
         = TopologyAPI.StreamId.newBuilder()
         .setComponentName("sourceComponent").setId("default").build();
 
-    List<Tuple> tuples = new LinkedList<>();
-    for (int i = 0; i < nkeys; i++) {
-      for (int j = 0; j < count; ++j) {
-        Tuple tuple = getTuple(componentStreamId, new Fields("a"),
-            new Values(new KeyValue<>(String.valueOf(i), j)));
-        LOG.info("addTuple: " + tuple);
-        tuples.add(tuple);
-      }
-    }
+    String[] sentence = new String[]{"This is a sentence"};
+    flatMapOperator.execute(getTuple(componentStreamId, new Fields("output"),
+        new Values(sentence)));
 
-    TupleWindow tupleWindow = new TupleWindowImpl(tuples, new LinkedList<>(), new LinkedList<>(),
-        startTime, endTime);
-    LOG.info("returnTupleWin: " + tupleWindow);
-    return tupleWindow;
+    Set<String> words = new HashSet<String>();
+    words.add("This");
+    words.add("is");
+    words.add("a");
+    words.add("sentence");
+    Assert.assertEquals(4, emittedTuples.size());
+    for (Object object : emittedTuples) {
+      String tuple = (String) object;
+      Assert.assertTrue(words.contains(tuple));
+      words.remove(tuple);
+    }
+    Assert.assertTrue(words.size() == 0);
   }
 
+  private FlatMapOperator<String, String> getFlatMapOperator() {
 
+    FlatMapOperator<String, String> flatMapOperator
+        = new FlatMapOperator<>((String line) -> Arrays.asList(line.split("\\s+")));
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  private GeneralReduceByKeyAndWindowOperator<KeyValue<String, Integer>, String, Integer>
-        getReduceByWindowOperator(Integer identity) {
-    GeneralReduceByKeyAndWindowOperator<KeyValue<String, Integer>, String, Integer>
-        reduceByWindowOperator = new GeneralReduceByKeyAndWindowOperator<>(
-            x -> x.getKey(), identity, (o, o2) -> o + o2.getValue());
-
-    reduceByWindowOperator.prepare(new Config(), PowerMockito.mock(TopologyContext.class),
+    flatMapOperator.prepare(new Config(), PowerMockito.mock(TopologyContext.class),
         new OutputCollector(new IOutputCollector() {
 
-          @Override
-          public void reportError(Throwable error) {
-
+          @Override public void reportError(Throwable error) {
           }
 
           @Override
           public List<Integer> emit(String streamId,
-                                    Collection<Tuple> anchors, List<Object> tuple) {
+              Collection<Tuple> anchors, List<Object> tuple) {
             emittedTuples.addAll(tuple);
             return null;
           }
 
           @Override
           public void emitDirect(int taskId, String streamId,
-                                 Collection<Tuple> anchors, List<Object> tuple) {
-
+              Collection<Tuple> anchors, List<Object> tuple) {
           }
 
-          @Override
-          public void ack(Tuple input) {
-
+          @Override public void ack(Tuple input) {
           }
 
-          @Override
-          public void fail(Tuple input) {
-
+          @Override public void fail(Tuple input) {
           }
         }));
-    return reduceByWindowOperator;
+
+    return flatMapOperator;
   }
 
   private Tuple getTuple(TopologyAPI.StreamId streamId, final Fields fields, Values values) {
-
     TopologyContext topologyContext = getContext(fields);
-    return new TupleImpl(topologyContext, streamId, 0,
+    return  new TupleImpl(topologyContext, streamId, 0,
         null, values, 1) {
       @Override
       public TopologyAPI.StreamId getSourceGlobalStreamId() {
@@ -182,7 +142,7 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
           String componentId, String streamId) {
         return fields;
       }
-
     };
   }
+
 }

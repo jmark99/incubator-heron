@@ -42,65 +42,67 @@ import org.apache.heron.api.tuple.Values;
 import org.apache.heron.common.utils.topology.TopologyContextImpl;
 import org.apache.heron.common.utils.tuple.TupleImpl;
 
-public class MapOperatorTest {
+public class UnionOperatorTest {
 
   private List<Object> emittedTuples;
-  private static final Logger LOG = Logger.getLogger(MapOperatorTest.class.getName());
+  private static final Logger LOG = Logger.getLogger(UnionOperatorTest.class.getName());
 
-  @Before
-  public void setUp() {
+  @Before public void setUp() {
     emittedTuples = new LinkedList<>();
   }
 
-  @Test
-  public void testMapOperator() {
-    LOG.info("testing mapOperator");
-    MapOperator<Integer, Integer> mapOperator = getMapOperator();
+  @Test public void testUnionOperator() {
+    LOG.info("testing unionOperator");
+    UnionOperator<Integer> unionOperator = getUnionOperator();
 
     HashMap<Integer, Integer> expectedResults = new HashMap<>();
-    expectedResults.put(12, 0);
-    expectedResults.put(13, 1);
-    expectedResults.put(14, 2);
+    expectedResults.put(0, 0);
+    expectedResults.put(1, 1);
+    expectedResults.put(2, 2);
+    expectedResults.put(3, 3);
 
-    TopologyAPI.StreamId componentStreamId
-        = TopologyAPI.StreamId.newBuilder()
-        .setComponentName("sourceComponent").setId("default").build();
+    TopologyAPI.StreamId componentStreamId1 = TopologyAPI.StreamId.newBuilder()
+        .setComponentName("sourceComponent1").setId("default").build();
 
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(0)));
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(1)));
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(2)));
+    TopologyAPI.StreamId componentStreamId2 = TopologyAPI.StreamId.newBuilder()
+        .setComponentName("sourceComponent2").setId("default2").build();
 
-    Assert.assertEquals(3, emittedTuples.size());
+    unionOperator.execute(getTuple(componentStreamId1, new Fields("output1"),
+        new Values(0)));
+    unionOperator.execute(getTuple(componentStreamId1, new Fields("output1"),
+        new Values(2)));
+
+    unionOperator.execute(getTuple(componentStreamId2, new Fields("output2"),
+        new Values(1)));
+    unionOperator.execute(getTuple(componentStreamId2, new Fields("output2"),
+        new Values(3)));
+
+    Assert.assertEquals(4, emittedTuples.size());
     for (Object object : emittedTuples) {
       Integer tuple = (Integer) object;
-      Assert.assertEquals((int) expectedResults.get(tuple), inverseMapFctn(tuple));
+      Assert.assertEquals(expectedResults.get(tuple), tuple);
     }
   }
 
-  private int inverseMapFctn(int val) {
-    return val - 12;
-  }
+  private UnionOperator<Integer> getUnionOperator() {
 
-  private MapOperator<Integer, Integer> getMapOperator() {
+    UnionOperator<Integer> unionOperator = new UnionOperator<>();
 
-    MapOperator<Integer, Integer> mapOperator = new MapOperator<>(x -> x + 12);
-
-    mapOperator.prepare(new Config(), PowerMockito.mock(TopologyContext.class),
+    unionOperator.prepare(new Config(), PowerMockito.mock(TopologyContext.class),
         new OutputCollector(new IOutputCollector() {
 
           @Override public void reportError(Throwable error) {
           }
 
-          @Override
-          public List<Integer> emit(String streamId,
-              Collection<Tuple> anchors, List<Object> tuple) {
+          @Override public List<Integer> emit(String streamId, Collection<Tuple> anchors,
+              List<Object> tuple) {
             emittedTuples.addAll(tuple);
             return null;
           }
 
           @Override
-          public void emitDirect(int taskId, String streamId,
-              Collection<Tuple> anchors, List<Object> tuple) {
+          public void emitDirect(int taskId, String streamId, Collection<Tuple> anchors,
+              List<Object> tuple) {
           }
 
           @Override public void ack(Tuple input) {
@@ -110,16 +112,14 @@ public class MapOperatorTest {
           }
         }));
 
-    return mapOperator;
+    return unionOperator;
   }
 
   private Tuple getTuple(TopologyAPI.StreamId streamId, final Fields fields, Values values) {
 
     TopologyContext topologyContext = getContext(fields);
-    return  new TupleImpl(topologyContext, streamId, 0,
-        null, values, 1) {
-      @Override
-      public TopologyAPI.StreamId getSourceGlobalStreamId() {
+    return new TupleImpl(topologyContext, streamId, 0, null, values, 1) {
+      @Override public TopologyAPI.StreamId getSourceGlobalStreamId() {
         return TopologyAPI.StreamId.newBuilder().setComponentName("sourceComponent")
             .setId("default").build();
       }
@@ -130,18 +130,11 @@ public class MapOperatorTest {
   private TopologyContext getContext(final Fields fields) {
     TopologyBuilder builder = new TopologyBuilder();
     return new TopologyContextImpl(new Config(),
-        builder.createTopology()
-            .setConfig(new Config())
-            .setName("test")
-            .setState(TopologyAPI.TopologyState.RUNNING)
-            .getTopology(),
-        new HashMap(), 1, null) {
-      @Override
-      public Fields getComponentOutputFields(
-          String componentId, String streamId) {
+        builder.createTopology().setConfig(new Config()).setName("test")
+            .setState(TopologyAPI.TopologyState.RUNNING).getTopology(), new HashMap(), 1, null) {
+      @Override public Fields getComponentOutputFields(String componentId, String streamId) {
         return fields;
       }
     };
   }
-
 }

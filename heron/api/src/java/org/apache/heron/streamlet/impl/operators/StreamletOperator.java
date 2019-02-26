@@ -20,6 +20,7 @@
 package org.apache.heron.streamlet.impl.operators;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.bolt.BaseRichBolt;
 import org.apache.heron.api.bolt.OutputCollector;
@@ -37,6 +38,8 @@ public abstract class StreamletOperator<R, T>
     implements IStreamletRichOperator<R, T> {
   private static final long serialVersionUID = 8524238140745238942L;
   protected static final String OUTPUT_FIELD_NAME = "output";
+
+  protected static final Logger LOG = Logger.getLogger(StreamletOperator.class.getName());
 
   protected OutputCollector collector;
 

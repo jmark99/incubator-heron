@@ -65,24 +65,25 @@ public class SupplierSource<R> extends StreamletSource {
     } else {
       collector.emit(new Values(data));
     }
-    // TODO change logging level
-    LOG.info("Emitting: [" + msgId + "]");
+    // TODO change logging level?
+    LOG.info("Emitted: [" + msgId + "]");
   }
 
   @Override public void ack(Object mid) {
     if (ackingEnabled) {
       msgIdCache.invalidate(mid);
-      // TODO change logging level
-      LOG.info("Acked:    [" + mid + "]");
+      // TODO change logging level?
+      LOG.info("Acked:   [" + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
+    LOG.info("fail...");
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
       collector.emit(values, mid);
-      // TODO change logging level
-      LOG.info("Re-emit:  [" + mid + "]");
+      // TODO change logging level?
+      LOG.info("Re-emit: ["  + mid + "]");
     }
   }
 }
