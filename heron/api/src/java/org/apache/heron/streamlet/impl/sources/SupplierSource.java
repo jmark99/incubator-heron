@@ -28,6 +28,9 @@ import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
 import org.apache.heron.streamlet.SerializableSupplier;
 
+import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
+import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
+
 /**
  * SupplierSource is a way to wrap a supplier function inside a Heron Spout.
  * The SupplierSource just calls the get method of the supplied function
@@ -51,8 +54,8 @@ public class SupplierSource<R> extends StreamletSource {
   @SuppressWarnings("rawtypes") @Override
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
-    ackingEnabled = isAckingEnabled(map, topologyContext);
-    msgIdCache = createCache();
+    ackingEnabled = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
+    msgIdCache = getCache();
   }
 
   @Override public void nextTuple() {
