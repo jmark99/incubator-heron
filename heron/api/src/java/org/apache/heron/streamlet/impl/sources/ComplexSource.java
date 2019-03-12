@@ -96,11 +96,11 @@ public class ComplexSource<R> extends StreamletSource {
   public void fail(Object mid) {
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      if (values != null) {
+      if (values.get(0) != null) {
         collector.emit(values, mid);
         LOG.info("Re-emit:  [" + mid + "]");
       } else {
-        // will not re-emit since value cannot be retrieve.
+        // will not re-emit since value cannot be retrieved.
         LOG.severe("Failed to retrieve cached value for msg: " + mid);
       }
     }

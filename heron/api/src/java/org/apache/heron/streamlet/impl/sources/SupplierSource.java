@@ -79,11 +79,12 @@ public class SupplierSource<R> extends StreamletSource {
   public void fail(Object mid) {
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      if (values != null) {
+      if (values.get(0) != null) {
         collector.emit(values, mid);
         LOG.info("Re-emit:  [" + mid + "]");
       } else {
-        LOG.warning("Failed to retrieve cached value for msg: " + mid);
+        // will not re-emit since value cannot be retrieved.
+        LOG.severe("Failed to retrieve cached value for msg: " + mid);
       }
     }
   }

@@ -43,8 +43,8 @@ public abstract class StreamletSource extends BaseRichSpout
   private static final long serialVersionUID = 8583965332619565343L;
   private static final String OUTPUT_FIELD_NAME = "output";
 
-  protected boolean ackingEnabled = false;
-  protected Cache<String, Object> msgIdCache;
+  boolean ackingEnabled = false;
+  Cache<String, Object> msgIdCache;
   protected String msgId;
   protected SpoutOutputCollector collector;
 
