@@ -23,8 +23,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.google.common.cache.Cache;
-
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.state.State;
 import org.apache.heron.api.topology.TopologyContext;
@@ -48,9 +46,6 @@ public class ComplexSource<R> extends StreamletSource {
   private Source<R> generator;
   private State<Serializable, Serializable> state;
 
-  protected Cache<String, Object> msgIdCache;
-  private String msgId;
-
   public ComplexSource(Source<R> generator) {
     this.generator = generator;
   }
@@ -68,8 +63,7 @@ public class ComplexSource<R> extends StreamletSource {
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
     ackingEnabled = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
-    //msgIdCache = createCache();
-    msgIdCache = getCache();
+    msgIdCache = createCache();
   }
 
   @Override
@@ -85,26 +79,30 @@ public class ComplexSource<R> extends StreamletSource {
         } else {
           collector.emit(new Values(tuple));
         }
-        // TODO change logging level
         LOG.info("Emitting: [" + msgId + "]");
       }
     }
   }
 
-  @Override public void ack(Object mid) {
+  @Override
+  public void ack(Object mid) {
     if (ackingEnabled) {
       msgIdCache.invalidate(mid);
-      // TODO change logging level
       LOG.info("Acked:    [" + mid + "]");
     }
   }
 
-  @Override public void fail(Object mid) {
+  @Override
+  public void fail(Object mid) {
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      collector.emit(values, mid);
-      // TODO change logging level
-      LOG.info("Re-emit:  [" + mid + "]");
+      if (values != null) {
+        collector.emit(values, mid);
+        LOG.info("Re-emit:  [" + mid + "]");
+      } else {
+        // will not re-emit since value cannot be retrieve.
+        LOG.severe("Failed to retrieve cached value for msg: " + mid);
+      }
     }
   }
 }

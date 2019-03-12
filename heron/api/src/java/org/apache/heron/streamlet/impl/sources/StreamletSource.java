@@ -32,10 +32,6 @@ import org.apache.heron.api.topology.IStatefulComponent;
 import org.apache.heron.api.topology.OutputFieldsDeclarer;
 import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Fields;
-import org.apache.heron.streamlet.impl.ContextImpl;
-
-import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
-import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
 
 /**
  * StreamletSource is the base class for all streamlet sources.
@@ -48,6 +44,8 @@ public abstract class StreamletSource extends BaseRichSpout
   private static final String OUTPUT_FIELD_NAME = "output";
 
   protected boolean ackingEnabled = false;
+  protected Cache<String, Object> msgIdCache;
+  protected String msgId;
   protected SpoutOutputCollector collector;
 
   @Override
@@ -63,11 +61,8 @@ public abstract class StreamletSource extends BaseRichSpout
     collector = outputCollector;
   }
 
-  // a convenience method for creating cache
-  // TODO set appropriate properties in builder
   <K, V> Cache<K, V> createCache() {
-    return CacheBuilder.newBuilder()
-        .build();
+    return CacheBuilder.newBuilder().build();
   }
 
   /**
@@ -86,17 +81,8 @@ public abstract class StreamletSource extends BaseRichSpout
    *
    * @return a unique message id string.
    */
-  public String getUniqueMessageId() {
+  String getUniqueMessageId() {
     return UUID.randomUUID().toString();
   }
 
-  /**
-   * Determine if streamlet acknowledgments (i.e., ATLEAST_ONCE) are set.
-   *
-   * @return true if acking is enabled; false otherwise.
-   */
-  public boolean isAckingEnabled(Map map, TopologyContext topologyContext) {
-    ContextImpl context = new ContextImpl(topologyContext, map, null);
-    return context.getConfig().get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
-  }
 }

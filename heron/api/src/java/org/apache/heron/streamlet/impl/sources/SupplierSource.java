@@ -21,8 +21,6 @@ package org.apache.heron.streamlet.impl.sources;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.google.common.cache.Cache;
-
 import org.apache.heron.api.spout.SpoutOutputCollector;
 import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Values;
@@ -44,9 +42,6 @@ public class SupplierSource<R> extends StreamletSource {
   private SerializableSupplier<R> supplier;
   private SpoutOutputCollector collector;
 
-  protected Cache<String, Object> msgIdCache;
-  private String msgId;
-
   public SupplierSource(SerializableSupplier<R> supplier) {
     this.supplier = supplier;
   }
@@ -55,10 +50,11 @@ public class SupplierSource<R> extends StreamletSource {
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
     ackingEnabled = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
-    msgIdCache = getCache();
+    msgIdCache = createCache();
   }
 
-  @Override public void nextTuple() {
+  @Override
+  public void nextTuple() {
     msgId = null;
     R data = supplier.get();
     if (ackingEnabled) {
@@ -68,24 +64,27 @@ public class SupplierSource<R> extends StreamletSource {
     } else {
       collector.emit(new Values(data));
     }
-    // TODO change logging level
     LOG.info("Emitting: [" + msgId + "]");
   }
 
-  @Override public void ack(Object mid) {
+  @Override
+  public void ack(Object mid) {
     if (ackingEnabled) {
       msgIdCache.invalidate(mid);
-      // TODO change logging level
       LOG.info("Acked:    [" + mid + "]");
     }
   }
 
-  @Override public void fail(Object mid) {
+  @Override
+  public void fail(Object mid) {
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      collector.emit(values, mid);
-      // TODO change logging level
-      LOG.info("Re-emit:  [" + mid + "]");
+      if (values != null) {
+        collector.emit(values, mid);
+        LOG.info("Re-emit:  [" + mid + "]");
+      } else {
+        LOG.warning("Failed to retrieve cached value for msg: " + mid);
+      }
     }
   }
 }
