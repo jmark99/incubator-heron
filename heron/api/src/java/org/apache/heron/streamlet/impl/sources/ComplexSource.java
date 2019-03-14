@@ -31,9 +31,6 @@ import org.apache.heron.streamlet.Context;
 import org.apache.heron.streamlet.Source;
 import org.apache.heron.streamlet.impl.ContextImpl;
 
-import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
-import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
-
 /**
  * SupplierSource is a way to wrap a supplier function inside a Heron Spout.
  * The SupplierSource just calls the get method of the supplied function
@@ -62,8 +59,6 @@ public class ComplexSource<R> extends StreamletSource {
     super.open(map, topologyContext, outputCollector);
     Context context = new ContextImpl(topologyContext, map, state);
     generator.setup(context);
-    ackingEnabled = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
-    msgIdCache = createCache();
   }
 
   @Override
@@ -72,21 +67,21 @@ public class ComplexSource<R> extends StreamletSource {
     msgId = null;
     if (tuples != null) {
       for (R tuple : tuples) {
-        if (ackingEnabled) {
+        if (enableAcking) {
           msgId = getUniqueMessageId();
           msgIdCache.put(msgId, tuple);
           collector.emit(new Values(tuple), msgId);
+          LOG.info("Emitting: [" + msgId + "]");
         } else {
           collector.emit(new Values(tuple));
         }
-        LOG.info("Emitting: [" + msgId + "]");
       }
     }
   }
 
   @Override
   public void ack(Object mid) {
-    if (ackingEnabled) {
+    if (enableAcking) {
       msgIdCache.invalidate(mid);
       LOG.info("Acked:    [" + mid + "]");
     }
@@ -94,7 +89,7 @@ public class ComplexSource<R> extends StreamletSource {
 
   @Override
   public void fail(Object mid) {
-    if (ackingEnabled) {
+    if (enableAcking) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
       if (values.get(0) != null) {
         collector.emit(values, mid);

@@ -33,6 +33,9 @@ import org.apache.heron.api.topology.OutputFieldsDeclarer;
 import org.apache.heron.api.topology.TopologyContext;
 import org.apache.heron.api.tuple.Fields;
 
+import static org.apache.heron.api.Config.TOPOLOGY_RELIABILITY_MODE;
+import static org.apache.heron.api.Config.TopologyReliabilityMode.ATLEAST_ONCE;
+
 /**
  * StreamletSource is the base class for all streamlet sources.
  * The only common stuff amongst all of them is the output streams
@@ -43,7 +46,7 @@ public abstract class StreamletSource extends BaseRichSpout
   private static final long serialVersionUID = 8583965332619565343L;
   private static final String OUTPUT_FIELD_NAME = "output";
 
-  protected boolean ackingEnabled = false;
+  protected boolean enableAcking = false;
   protected Cache<String, Object> msgIdCache;
   protected String msgId;
   protected SpoutOutputCollector collector;
@@ -59,6 +62,10 @@ public abstract class StreamletSource extends BaseRichSpout
   public void open(Map<String, Object> map, TopologyContext topologyContext,
                    SpoutOutputCollector outputCollector) {
     collector = outputCollector;
+    enableAcking = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
+    if (enableAcking) {
+      msgIdCache = createCache();
+    }
   }
 
   <K, V> Cache<K, V> createCache() {
