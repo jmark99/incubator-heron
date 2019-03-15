@@ -53,7 +53,7 @@ public class SupplierSource<R> extends StreamletSource {
     R data = supplier.get();
     if (enableAcking) {
       msgId = getUniqueMessageId();
-      msgIdCache.put(msgId, data);
+      ackCache.put(msgId, data);
       collector.emit(new Values(data), msgId);
       LOG.info("Emitting: [" + msgId + "]");
     } else {
@@ -64,7 +64,7 @@ public class SupplierSource<R> extends StreamletSource {
   @Override
   public void ack(Object mid) {
     if (enableAcking) {
-      msgIdCache.invalidate(mid);
+      ackCache.invalidate(mid);
       LOG.info("Acked:    [" + mid + "]");
     }
   }
@@ -72,7 +72,7 @@ public class SupplierSource<R> extends StreamletSource {
   @Override
   public void fail(Object mid) {
     if (enableAcking) {
-      Values values = new Values(msgIdCache.getIfPresent(mid));
+      Values values = new Values(ackCache.getIfPresent(mid));
       if (values.get(0) != null) {
         collector.emit(values, mid);
         LOG.info("Re-emit:  [" + mid + "]");

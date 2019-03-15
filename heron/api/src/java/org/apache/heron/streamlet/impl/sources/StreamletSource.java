@@ -47,7 +47,7 @@ public abstract class StreamletSource extends BaseRichSpout
   private static final String OUTPUT_FIELD_NAME = "output";
 
   protected boolean enableAcking = false;
-  protected Cache<String, Object> msgIdCache;
+  protected Cache<String, Object> ackCache;
   protected String msgId;
   protected SpoutOutputCollector collector;
 
@@ -64,7 +64,7 @@ public abstract class StreamletSource extends BaseRichSpout
     collector = outputCollector;
     enableAcking = map.get(TOPOLOGY_RELIABILITY_MODE).equals(ATLEAST_ONCE.toString());
     if (enableAcking) {
-      msgIdCache = createCache();
+      ackCache = createCache();
     }
   }
 

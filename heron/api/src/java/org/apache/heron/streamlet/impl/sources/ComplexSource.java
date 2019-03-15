@@ -69,7 +69,7 @@ public class ComplexSource<R> extends StreamletSource {
       for (R tuple : tuples) {
         if (enableAcking) {
           msgId = getUniqueMessageId();
-          msgIdCache.put(msgId, tuple);
+          ackCache.put(msgId, tuple);
           collector.emit(new Values(tuple), msgId);
           LOG.info("Emitting: [" + msgId + "]");
         } else {
@@ -82,7 +82,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override
   public void ack(Object mid) {
     if (enableAcking) {
-      msgIdCache.invalidate(mid);
+      ackCache.invalidate(mid);
       LOG.info("Acked:    [" + mid + "]");
     }
   }
@@ -90,7 +90,7 @@ public class ComplexSource<R> extends StreamletSource {
   @Override
   public void fail(Object mid) {
     if (enableAcking) {
-      Values values = new Values(msgIdCache.getIfPresent(mid));
+      Values values = new Values(ackCache.getIfPresent(mid));
       if (values.get(0) != null) {
         collector.emit(values, mid);
         LOG.info("Re-emit:  [" + mid + "]");
