@@ -68,6 +68,9 @@ public abstract class StreamletSource extends BaseRichSpout
     }
   }
 
+  /**
+   * Create a cache for storing messageId/tuple associations when using ATLEAST_ONCE semantics.
+   */
   <K, V> Cache<K, V> createCache() {
     return CacheBuilder.newBuilder().build();
   }
