@@ -39,10 +39,8 @@ public class MapOperator<R, T> extends StreamletOperator<R, T> {
   @SuppressWarnings("unchecked")
   @Override
   public void execute(Tuple tuple) {
-    LOG.info("MapOperator:execute");
     R obj = (R) tuple.getValue(0);
     T result = mapFn.apply(obj);
-    LOG.info("MapOperator:execute - emitting " + tuple + ", " + new Values(result));
     collector.emit(tuple, new Values(result));
     collector.ack(tuple);
   }
