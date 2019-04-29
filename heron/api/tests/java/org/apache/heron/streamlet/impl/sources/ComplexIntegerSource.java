@@ -21,7 +21,6 @@ package org.apache.heron.streamlet.impl.sources;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.heron.streamlet.Context;
@@ -29,7 +28,6 @@ import org.apache.heron.streamlet.Source;
 
 public class ComplexIntegerSource implements Source<Integer> {
 
-  private Random rnd = new Random();
   private List<Integer> intList;
 
   ComplexIntegerSource() {

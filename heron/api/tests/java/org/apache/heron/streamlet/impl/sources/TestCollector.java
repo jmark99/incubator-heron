@@ -20,35 +20,25 @@ package org.apache.heron.streamlet.impl.sources;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.apache.heron.api.spout.ISpoutOutputCollector;
 
 
 public class TestCollector implements ISpoutOutputCollector {
 
-  private static final Logger LOG = Logger.getLogger(TestCollector.class.getName());
-
   @Override public List<Integer> emit(String streamId, List<Object> tuple, Object messageId) {
-    LOG.info("**** emit...");
+    int taskId = 1234;
     List<Integer> tskIds = new ArrayList<>();
-    // set tskIds to value of tuple unless null
-    if (tuple  == null) {
-      tskIds.add(996985999);
-    } else {
-      tskIds.add((Integer) tuple.get(0));
+    if (tuple  != null) {
+      tskIds.add(taskId++);
     }
-
-    LOG.info("**** TestCollector::emit - emitting " + tuple.toString());
     return tskIds;
   }
 
   @Override
   public void emitDirect(int taskId, String streamId, List<Object> tuple, Object messageId) {
-    LOG.info("**** emitDirect...");
   }
 
   @Override public void reportError(Throwable error) {
-    LOG.info("**** reportError...");
   }
 }

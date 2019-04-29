@@ -20,7 +20,9 @@ package org.apache.heron.streamlet.impl.sources;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.cache.Cache;
@@ -46,7 +48,9 @@ public class ComplexSource<R> extends StreamletSource {
   private State<Serializable, Serializable> state;
 
   protected Cache<String, Object> msgIdCache;
-  private String msgId;
+  protected String msgId;
+  protected List<Integer> taskIds;
+  private Level logLevel = Level.INFO;
 
   public ComplexSource(Source<R> generator) {
     this.generator = generator;
@@ -77,12 +81,11 @@ public class ComplexSource<R> extends StreamletSource {
         if (ackingEnabled) {
           msgId = getUniqueMessageId();
           msgIdCache.put(msgId, tuple);
-          collector.emit(new Values(tuple), msgId);
+          taskIds = collector.emit(new Values(tuple), msgId);
         } else {
-          collector.emit(new Values(tuple));
+          taskIds = collector.emit(new Values(tuple));
         }
-        // TODO change logging level
-        LOG.info("Emitting: [" + msgId + "]");
+        LOG.log(logLevel, "emitting: [" + msgId + "]");
       }
     }
   }
@@ -90,17 +93,15 @@ public class ComplexSource<R> extends StreamletSource {
   @Override public void ack(Object mid) {
     if (ackingEnabled) {
       msgIdCache.invalidate(mid);
-      // TODO change logging level
-      LOG.info("Acked:    [" + mid + "]");
+      LOG.log(logLevel, "acked:    [" + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      collector.emit(values, mid);
-      // TODO change logging level
-      LOG.info("Re-emit:  [" + mid + "]");
+      taskIds = collector.emit(values, mid);
+      LOG.log(logLevel, "re-emit:  [" + mid + "]");
     }
   }
 }

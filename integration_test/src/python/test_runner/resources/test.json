@@ -150,6 +150,11 @@
       "expectedResultRelativePath": "streamlet_with_filter_and_transform/StreamletWithFilterAndTransformResults.json"
     },
     {
+     "topologyName": "IntegrationTest_StreamletWithAcks",
+     "classPath": "streamlet_with_acks.StreamletWithAcks",
+     "expectedResultRelativePath": "streamlet_with_acks/StreamletWithAcksResults.json"
+    },
+    {
       "topologyName": "IntegrationTest_StreamletWithMapAndFlatMapAndFilterAndClone",
       "classPath": "streamlet_with_map_and_flatmap_and_filter_and_clone.StreamletWithMapAndFlatMapAndFilterAndClone",
       "expectedResultRelativePath": "streamlet_with_map_and_flatmap_and_filter_and_clone/StreamletWithMapAndFlatMapAndFilterAndCloneResults.json"

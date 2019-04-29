@@ -20,6 +20,7 @@
 package org.apache.heron.api.spout;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.heron.api.utils.Utils;
 
@@ -34,6 +35,9 @@ import org.apache.heron.api.utils.Utils;
  * guarantee that each message is fully processed at least once.
  */
 public class SpoutOutputCollector implements ISpoutOutputCollector {
+
+  private static final Logger LOG = Logger.getLogger(SpoutOutputCollector.class.getName());
+
   private ISpoutOutputCollector delegate;
 
   public SpoutOutputCollector(ISpoutOutputCollector aDelegate) {

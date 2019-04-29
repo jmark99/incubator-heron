@@ -66,7 +66,7 @@ public class FlatMapOperatorTest {
 
     String[] sentence = new String[]{"This is a sentence"};
     flatMapOperator.execute(getTuple(componentStreamId, new Fields("output"),
-        new Values(sentence)));
+        new Values((Object) sentence)));
 
     Set<String> words = new HashSet<String>();
     words.add("This");

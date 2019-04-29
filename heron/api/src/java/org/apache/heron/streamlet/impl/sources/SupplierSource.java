@@ -18,7 +18,9 @@
  */
 package org.apache.heron.streamlet.impl.sources;
 
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.common.cache.Cache;
@@ -39,16 +41,21 @@ public class SupplierSource<R> extends StreamletSource {
   private static final Logger LOG = Logger.getLogger(SupplierSource.class.getName());
 
   private SerializableSupplier<R> supplier;
-  private SpoutOutputCollector collector;
+  protected SpoutOutputCollector collector;
 
   protected Cache<String, Object> msgIdCache;
-  private String msgId;
+  protected String msgId;
+  private Level logLevel = Level.INFO;
 
   public SupplierSource(SerializableSupplier<R> supplier) {
     this.supplier = supplier;
   }
 
-  @SuppressWarnings("rawtypes") @Override
+  // The emit methods return a list of taskIds. They are collected to facilitate unit testing.
+  protected List<Integer> taskIds;
+
+  @SuppressWarnings("rawtypes")
+  @Override
   public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector outputCollector) {
     collector = outputCollector;
     ackingEnabled = isAckingEnabled(map, topologyContext);
@@ -61,29 +68,25 @@ public class SupplierSource<R> extends StreamletSource {
     if (ackingEnabled) {
       msgId = getUniqueMessageId();
       msgIdCache.put(msgId, data);
-      collector.emit(new Values(data), msgId);
+      taskIds = collector.emit(new Values(data), msgId);
+      LOG.log(logLevel, "emitted: [" + data + ": " + msgId + "]");
     } else {
-      collector.emit(new Values(data));
+      taskIds = collector.emit(new Values(data));
     }
-    // TODO change logging level?
-    LOG.info("Emitted: [" + msgId + "]");
   }
 
   @Override public void ack(Object mid) {
     if (ackingEnabled) {
       msgIdCache.invalidate(mid);
-      // TODO change logging level?
-      LOG.info("Acked:   [" + mid + "]");
+      LOG.log(logLevel, "acked:   [" + mid + "]");
     }
   }
 
   @Override public void fail(Object mid) {
-    LOG.info("fail...");
     if (ackingEnabled) {
       Values values = new Values(msgIdCache.getIfPresent(mid));
-      collector.emit(values, mid);
-      // TODO change logging level?
-      LOG.info("Re-emit: ["  + mid + "]");
+      taskIds = collector.emit(values, mid);
+      LOG.log(logLevel, "re-emit: ["  + mid + "]");
     }
   }
 }

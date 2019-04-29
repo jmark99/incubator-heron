@@ -46,6 +46,8 @@ public class MapOperatorTest {
 
   private List<Object> emittedTuples;
   private static final Logger LOG = Logger.getLogger(MapOperatorTest.class.getName());
+  private int ackedTuples = 0;
+  private Config config = new Config();
 
   @Before
   public void setUp() {
@@ -53,9 +55,10 @@ public class MapOperatorTest {
   }
 
   @Test
-  public void testMapOperator() {
-    LOG.info("testing mapOperator");
-    MapOperator<Integer, Integer> mapOperator = getMapOperator();
+  public void testMapOperatorWithAcking() {
+    LOG.info(">>>> testing testMapOperatorWithAcking");
+    ackedTuples = 0;
+    MapOperator<Integer, Integer> mapOperator = getMapOperator(true);
 
     HashMap<Integer, Integer> expectedResults = new HashMap<>();
     expectedResults.put(12, 0);
@@ -66,26 +69,64 @@ public class MapOperatorTest {
         = TopologyAPI.StreamId.newBuilder()
         .setComponentName("sourceComponent").setId("default").build();
 
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(0)));
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(1)));
-    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(2)));
+    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(0), true));
+    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(1), true));
+    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(2), true));
 
     Assert.assertEquals(3, emittedTuples.size());
     for (Object object : emittedTuples) {
       Integer tuple = (Integer) object;
       Assert.assertEquals((int) expectedResults.get(tuple), inverseMapFctn(tuple));
     }
+
+    Assert.assertEquals(ackedTuples, 3);
   }
+
+
+//  @Test
+//  public void testMapOperatorWithoutAcking() {
+//    LOG.info(">>>> testing testMapOperatorWithoutAcking");
+//    ackedTuples = 0;
+//    config.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATMOST_ONCE);
+//    MapOperator<Integer, Integer> mapOperator = getMapOperator(false);
+//
+//    HashMap<Integer, Integer> expectedResults = new HashMap<>();
+//    expectedResults.put(12, 0);
+//    expectedResults.put(13, 1);
+//    expectedResults.put(14, 2);
+//
+//    TopologyAPI.StreamId componentStreamId
+//        = TopologyAPI.StreamId.newBuilder()
+//        .setComponentName("sourceComponent").setId("default").build();
+//
+//    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(0), false));
+//    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(1), false));
+//    mapOperator.execute(getTuple(componentStreamId, new Fields("output"), new Values(2), false));
+//
+//    Assert.assertEquals(3, emittedTuples.size());
+//    for (Object object : emittedTuples) {
+//      Integer tuple = (Integer) object;
+//      Assert.assertEquals((int) expectedResults.get(tuple), inverseMapFctn(tuple));
+//    }
+//
+//    Assert.assertEquals(0, ackedTuples);
+//  }
 
   private int inverseMapFctn(int val) {
     return val - 12;
   }
 
-  private MapOperator<Integer, Integer> getMapOperator() {
+  private MapOperator<Integer, Integer> getMapOperator(boolean enableAcking) {
+
+    if (enableAcking) {
+      config.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE);
+    } else {
+      config.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATMOST_ONCE);
+    }
 
     MapOperator<Integer, Integer> mapOperator = new MapOperator<>(x -> x + 12);
 
-    mapOperator.prepare(new Config(), PowerMockito.mock(TopologyContext.class),
+    mapOperator.prepare(config, PowerMockito.mock(TopologyContext.class),
         new OutputCollector(new IOutputCollector() {
 
           @Override public void reportError(Throwable error) {
@@ -95,6 +136,7 @@ public class MapOperatorTest {
           public List<Integer> emit(String streamId,
               Collection<Tuple> anchors, List<Object> tuple) {
             emittedTuples.addAll(tuple);
+            LOG.info(">>>> this.emia...");
             return null;
           }
 
@@ -104,18 +146,22 @@ public class MapOperatorTest {
           }
 
           @Override public void ack(Tuple input) {
+            ackedTuples++;
+            LOG.info(">>>> acking tuple: " + input);
           }
 
           @Override public void fail(Tuple input) {
+            LOG.info(">>>> failing tuple: " + input);
           }
         }));
 
     return mapOperator;
   }
 
-  private Tuple getTuple(TopologyAPI.StreamId streamId, final Fields fields, Values values) {
+  private Tuple getTuple(TopologyAPI.StreamId streamId, final Fields fields, Values values,
+      boolean enableAcking) {
 
-    TopologyContext topologyContext = getContext(fields);
+    TopologyContext topologyContext = getContext(fields, enableAcking);
     return  new TupleImpl(topologyContext, streamId, 0,
         null, values, 1) {
       @Override
@@ -127,11 +173,17 @@ public class MapOperatorTest {
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private TopologyContext getContext(final Fields fields) {
+  private TopologyContext getContext(final Fields fields, boolean enableAcking) {
     TopologyBuilder builder = new TopologyBuilder();
-    return new TopologyContextImpl(new Config(),
+    if (enableAcking) {
+      config.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATLEAST_ONCE);
+    } else {
+      config.setTopologyReliabilityMode(Config.TopologyReliabilityMode.ATMOST_ONCE);
+    }
+    LOG.info(">>>> RELIABILITY MODE: " + config.get("topology.reliability.mode"));
+    return new TopologyContextImpl(config,
         builder.createTopology()
-            .setConfig(new Config())
+            .setConfig(config)
             .setName("test")
             .setState(TopologyAPI.TopologyState.RUNNING)
             .getTopology(),

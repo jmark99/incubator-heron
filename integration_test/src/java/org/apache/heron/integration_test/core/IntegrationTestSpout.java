@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -49,6 +50,8 @@ public class IntegrationTestSpout implements IRichSpout {
   private boolean hasSetStarted = false;
   private int maxExecutions;
   private Map<Object, List<Object>> pendingMessages;
+
+  private boolean forceFailure = true;
 
   public IntegrationTestSpout(IRichSpout delegateSpout,
                               int maxExecutions,
@@ -108,6 +111,12 @@ public class IntegrationTestSpout implements IRichSpout {
 
   @Override
   public void nextTuple() {
+//    try {
+//      Thread.sleep(1000);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
+//    LOG.info(":::: nextTuple");
     if (doneEmitting()) {
       return;
     } else if (!this.hasSetStarted) {
@@ -140,6 +149,16 @@ public class IntegrationTestSpout implements IRichSpout {
 
   @Override
   public void ack(Object messageId) {
+    LOG.info(":::: ack...");
+    if (forceFailure) {
+      Random rnd = new Random();
+      int val = rnd.nextInt(3);
+      if (val == 1) {
+        LOG.info("forceFailure....i.e. do not ack tuple with id : " + messageId);
+        forceFailure = false;
+        return;
+      }
+    }
     tuplesToAck--;
     LOG.info("Received an ack with MessageId: " + messageId + " tuplesToAck=" + tuplesToAck);
 
@@ -152,12 +171,14 @@ public class IntegrationTestSpout implements IRichSpout {
   }
 
   protected void handleAckedMessage(Object messageId, List<Object> tuple) {
+    LOG.info(":::: handleAckedMessage - removing message with id " + messageId);
     pendingMessages.remove(messageId);
   }
 
   @Override
   public void fail(Object messageId) {
-    LOG.info("Received a fail with MessageId: " + messageId);
+    LOG.info(":::: fail...");
+    LOG.info(":::: Received a fail with MessageId: " + messageId);
 
     tuplesToAck--;
     if (!isTestMessageId(messageId)) {
@@ -212,6 +233,7 @@ public class IntegrationTestSpout implements IRichSpout {
 
     @Override
     public List<Integer> emit(String streamId, List<Object> tuple, Object messageId) {
+      LOG.info(":::: tuple.get(0): " + tuple.get(0));
       tuplesToAck++;
       LOG.info("Emitting tuple: " + tuple + ", tuplesToAck=" + tuplesToAck);
       return delegate.emit(streamId, tuple, getMessageId(tuple, messageId));
