@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,8 +50,6 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
   private List<Object> emittedTuples;
   private long startTime = 1508099660801L;
   private long endTime = startTime + 1000L;
-  private static final Logger LOG =
-      Logger.getLogger(GeneralReduceByKeyAndWindowOperator.class.getName());
 
   @Before
   public void setUp() {
@@ -66,7 +63,6 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
         getReduceByWindowOperator(12);
 
     TupleWindow tupleWindow = getTupleWindow(3, 5);
-    LOG.info("tupleWindow: " + tupleWindow);
 
     HashMap<String, Integer> expectedResults = new HashMap<>();
     expectedResults.put("0", 22);
@@ -79,10 +75,8 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
     for (Object object : emittedTuples) {
       KeyValue<KeyedWindow<String>, Integer> tuple =
           (KeyValue<KeyedWindow<String>, Integer>) object;
-      LOG.info("tuple: " + tuple);
       KeyedWindow<String> window = tuple.getKey();
       String key = window.getKey();
-      LOG.info("key: " + key);
       Assert.assertEquals(5, window.getWindow().getCount());
       Assert.assertEquals(startTime, window.getWindow().getStartTime());
       Assert.assertEquals(endTime, window.getWindow().getEndTime());
@@ -100,14 +94,12 @@ public class GeneralReduceByKeyAndWindowOperatorTest {
       for (int j = 0; j < count; ++j) {
         Tuple tuple = getTuple(componentStreamId, new Fields("a"),
             new Values(new KeyValue<>(String.valueOf(i), j)));
-        LOG.info("addTuple: " + tuple);
         tuples.add(tuple);
       }
     }
 
     TupleWindow tupleWindow = new TupleWindowImpl(tuples, new LinkedList<>(), new LinkedList<>(),
         startTime, endTime);
-    LOG.info("returnTupleWin: " + tupleWindow);
     return tupleWindow;
   }
 

@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,8 +51,6 @@ public class ReduceByKeyAndWindowOperatorTest {
   private long startTime = 1508099660801L;
   private long endTime = startTime + 1000L;
 
-  private static final Logger LOG = Logger.getLogger(ReduceByKeyAndWindowOperator.class.getName());
-
   @Before
   public void setUp() {
     emittedTuples = new LinkedList<>();
@@ -78,7 +75,6 @@ public class ReduceByKeyAndWindowOperatorTest {
     for (Object object : emittedTuples) {
       KeyValue<KeyedWindow<String>, Integer> tuple =
           (KeyValue<KeyedWindow<String>, Integer>) object;
-      LOG.info("tuple: " + tuple);
       KeyedWindow<String> window = tuple.getKey();
       String key = window.getKey();
       Assert.assertEquals(5, window.getWindow().getCount());
@@ -98,14 +94,12 @@ public class ReduceByKeyAndWindowOperatorTest {
       for (int j = 0; j < count; ++j) {
         Tuple tuple = getTuple(componentStreamId, new Fields("a"),
             new Values(String.valueOf(i)));
-        LOG.info("addTuple: " + tuple);
         tuples.add(tuple);
       }
     }
 
     TupleWindow tupleWindow = new TupleWindowImpl(tuples, new LinkedList<>(), new LinkedList<>(),
         startTime, endTime);
-    LOG.info("returnTupleWin: " + tupleWindow);
     return tupleWindow;
   }
 

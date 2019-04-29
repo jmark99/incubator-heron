@@ -52,7 +52,6 @@ public class UnionOperatorTest {
   }
 
   @Test public void testUnionOperator() {
-    LOG.info("testing unionOperator");
     UnionOperator<Integer> unionOperator = getUnionOperator();
 
     HashMap<Integer, Integer> expectedResults = new HashMap<>();
