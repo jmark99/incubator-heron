@@ -21,7 +21,6 @@ java_library(
 )
 
 java_tests(
-    size = "small",
     test_classes = [
         "org.apache.heron.api.windowing.WindowManagerTest",
         "org.apache.heron.api.windowing.WaterMarkEventGeneratorTest",
@@ -48,4 +47,5 @@ java_tests(
         "org.apache.heron.api.utils.UtilsTest",
     ],
     runtime_deps = [":api-tests"],
+    size = "small",
 )

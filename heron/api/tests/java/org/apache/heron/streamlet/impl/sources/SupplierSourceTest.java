@@ -108,14 +108,13 @@ public class SupplierSourceTest {
 
   /**
    * With acking disabled the cache is not involved. Use this fact to
-   * verify acking with ackingEnabled set to false.
+   * verify proper behavior with ackingEnabled set to false.
    */
   @Test
-  public void testAckWithoutAckingDisabled1() {
+  public void testAckWithAckingDisabled1() {
     source.ackingEnabled = false;
-    // clear all cache entries
     Assert.assertEquals(0, source.msgIdCache.size());
-    // Add an 'msgId' entry to cache. This entry is being placed into the
+    // Add a 'msgId' entry to cache. This entry is being placed into the
     // cache solely to be used in verifying that the ack call has no effect
     // on the cache.
     source.msgIdCache.put("msgId", "1");
@@ -134,7 +133,7 @@ public class SupplierSourceTest {
    * that nothing was added to cache by sending a ack.
    */
   @Test
-  public void testAckWithoutAckingDisabled2() {
+  public void testAckWithAckingDisabled2() {
     source.ackingEnabled = false;
     Assert.assertEquals(0, source.msgIdCache.size());
     source.ack("id1");

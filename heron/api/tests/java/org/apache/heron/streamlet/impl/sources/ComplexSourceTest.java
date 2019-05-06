@@ -104,7 +104,7 @@ public class ComplexSourceTest {
    * verify acking with ackingEnabled set to false.
    */
   @Test
-  public void testAckWithoutAckingDisabled1() {
+  public void testAckWithAckingDisabled1() {
     source.ackingEnabled = false;
     // clear all cache entries
     Assert.assertEquals(0, source.msgIdCache.size());
@@ -127,7 +127,7 @@ public class ComplexSourceTest {
    * that nothing was added to cache by sending a ack.
    */
   @Test
-  public void testAckWithoutAckingDisabled2() {
+  public void testAckWithAckingDisabled2() {
     source.ackingEnabled = false;
     Assert.assertEquals(0, source.msgIdCache.size());
     source.ack("id1");
