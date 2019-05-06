@@ -34,6 +34,7 @@ import org.apache.heron.api.utils.Utils;
 public class OutputCollector implements IOutputCollector {
   private IOutputCollector delegate;
 
+
   public OutputCollector(IOutputCollector aDelegate) {
     delegate = aDelegate;
   }
